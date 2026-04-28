@@ -2,7 +2,7 @@
   "info": {
     "name": "Lab Slot Booking Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Demo flow for Lab Slot Booking assignment"
+    "description": "Complete API demo for Lab Slot Booking System. Run folders in order: Auth â†’ Labs â†’ Slots â†’ Bookings â†’ User Management."
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:4000" },
@@ -14,218 +14,362 @@
     { "key": "studentToken", "value": "" },
     { "key": "labId", "value": "" },
     { "key": "slotId", "value": "" },
-    { "key": "bookingId", "value": "" }
+    { "key": "bookingId", "value": "" },
+    { "key": "userId", "value": "" }
   ],
   "item": [
     {
-      "name": "Health - Gateway",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/health"
-      }
+      "name": "0 - Health",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        }
+      ]
     },
     {
-      "name": "Login - Admin",
-      "event": [
+      "name": "1 - Auth",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('Status code is 200', function () {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Store admin token', function () {",
-              "  const body = pm.response.json();",
-              "  pm.expect(body).to.have.property('token');",
-              "  pm.collectionVariables.set('adminToken', body.token);",
-              "});"
-            ]
+          "name": "Register - Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Student\",\n  \"email\": \"newstudent@example.com\",\n  \"password\": \"Student@123\",\n  \"role\": \"student\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login - Admin",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "const body = pm.response.json();",
+                "pm.collectionVariables.set('adminToken', body.token);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login - Student",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "const body = pm.response.json();",
+                "pm.collectionVariables.set('studentToken', body.token);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
           }
         }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-        },
-        "url": "{{baseUrl}}/auth/login"
-      }
+      ]
     },
     {
-      "name": "Login - Student",
-      "event": [
+      "name": "2 - Labs (Admin)",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('Status code is 200', function () {",
-              "  pm.response.to.have.status(200);",
-              "});",
-              "pm.test('Store student token', function () {",
-              "  const body = pm.response.json();",
-              "  pm.expect(body).to.have.property('token');",
-              "  pm.collectionVariables.set('studentToken', body.token);",
-              "});"
-            ]
+          "name": "List All Labs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/booking/labs"
+          }
+        },
+        {
+          "name": "Create Lab",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                "const body = pm.response.json();",
+                "pm.collectionVariables.set('labId', body.data._id);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Computer Networks Lab\",\n  \"location\": \"Block A - Floor 2\",\n  \"totalSeats\": 30,\n  \"equipmentTags\": [\"routers\", \"switches\"]\n}"
+            },
+            "url": "{{baseUrl}}/booking/labs"
+          }
+        },
+        {
+          "name": "Edit Lab",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Advanced Networks Lab\",\n  \"location\": \"Block B - Floor 1\",\n  \"totalSeats\": 35\n}"
+            },
+            "url": "{{baseUrl}}/booking/labs/{{labId}}"
+          }
+        },
+        {
+          "name": "Delete Lab",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/booking/labs/{{labId}}"
           }
         }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
-        },
-        "url": "{{baseUrl}}/auth/login"
-      }
+      ]
     },
     {
-      "name": "Create Lab - Admin",
-      "event": [
+      "name": "3 - Slots (Admin)",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('Status code is 201', function () {",
-              "  pm.response.to.have.status(201);",
-              "});",
-              "pm.test('Store lab id', function () {",
-              "  const body = pm.response.json();",
-              "  pm.expect(body).to.have.property('data');",
-              "  pm.collectionVariables.set('labId', body.data._id);",
-              "});"
-            ]
+          "name": "List All Slots",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/booking/slots"
+          }
+        },
+        {
+          "name": "List Slots by Lab",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/booking/slots?labId={{labId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["booking", "slots"],
+              "query": [{ "key": "labId", "value": "{{labId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Create Slot",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                "const body = pm.response.json();",
+                "pm.collectionVariables.set('slotId', body.data._id);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labId\": \"{{labId}}\",\n  \"date\": \"2026-05-10\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 10\n}"
+            },
+            "url": "{{baseUrl}}/booking/slots"
+          }
+        },
+        {
+          "name": "Edit Slot",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-05-10\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"11:00\",\n  \"capacity\": 12\n}"
+            },
+            "url": "{{baseUrl}}/booking/slots/{{slotId}}"
+          }
+        },
+        {
+          "name": "Delete Slot",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/booking/slots/{{slotId}}"
           }
         }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Computer Networks Lab\",\n  \"location\": \"Block A - Floor 2\",\n  \"totalSeats\": 30,\n  \"equipmentTags\": [\"routers\", \"switches\"]\n}"
-        },
-        "url": "{{baseUrl}}/booking/labs"
-      }
+      ]
     },
     {
-      "name": "Create Slot - Admin",
-      "event": [
+      "name": "4 - Bookings",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('Status code is 201', function () {",
-              "  pm.response.to.have.status(201);",
-              "});",
-              "pm.test('Store slot id', function () {",
-              "  const body = pm.response.json();",
-              "  pm.expect(body).to.have.property('data');",
-              "  pm.collectionVariables.set('slotId', body.data._id);",
-              "});"
-            ]
+          "name": "Create Booking - Student",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                "const body = pm.response.json();",
+                "pm.collectionVariables.set('bookingId', body.data._id);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotId\": \"{{slotId}}\",\n  \"purpose\": \"Assignment preparation\"\n}"
+            },
+            "url": "{{baseUrl}}/booking/bookings"
+          }
+        },
+        {
+          "name": "My Bookings - Student",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/booking/bookings/me"
+          }
+        },
+        {
+          "name": "List Pending Bookings - Admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/booking/bookings?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["booking", "bookings"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+        {
+          "name": "List Approved Bookings - Admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/booking/bookings?status=APPROVED",
+              "host": ["{{baseUrl}}"],
+              "path": ["booking", "bookings"],
+              "query": [{ "key": "status", "value": "APPROVED" }]
+            }
+          }
+        },
+        {
+          "name": "List All Bookings - Admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/booking/bookings"
+          }
+        },
+        {
+          "name": "Approve Booking - Admin",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/booking/bookings/{{bookingId}}/approve"
+          }
+        },
+        {
+          "name": "Reject Booking - Admin",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/booking/bookings/{{bookingId}}/reject"
+          }
+        },
+        {
+          "name": "Cancel Booking - Student",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/booking/bookings/{{bookingId}}/cancel"
           }
         }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"labId\": \"{{labId}}\",\n  \"date\": \"2026-05-01\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"11:00\",\n  \"capacity\": 5\n}"
-        },
-        "url": "{{baseUrl}}/booking/slots"
-      }
+      ]
     },
     {
-      "name": "List Slots - Student",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{studentToken}}" }
-        ],
-        "url": "{{baseUrl}}/booking/slots"
-      }
-    },
-    {
-      "name": "Create Booking - Student",
-      "event": [
+      "name": "5 - User Management (Admin)",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('Status code is 201', function () {",
-              "  pm.response.to.have.status(201);",
-              "});",
-              "pm.test('Store booking id', function () {",
-              "  const body = pm.response.json();",
-              "  pm.expect(body).to.have.property('data');",
-              "  pm.collectionVariables.set('bookingId', body.data._id);",
-              "});"
-            ]
+          "name": "List All Users",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "const body = pm.response.json();",
+                "if (body.data && body.data.length > 0) {",
+                "  pm.collectionVariables.set('userId', body.data[0]._id);",
+                "}"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/auth/users"
+          }
+        },
+        {
+          "name": "Delete User by ID - Admin",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/auth/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Delete Own Account - Student",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/auth/users/{{userId}}"
           }
         }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{studentToken}}" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"slotId\": \"{{slotId}}\",\n  \"purpose\": \"Assignment preparation\"\n}"
-        },
-        "url": "{{baseUrl}}/booking/bookings"
-      }
-    },
-    {
-      "name": "List Pending Bookings - Admin",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-        ],
-        "url": "{{baseUrl}}/booking/bookings?status=PENDING"
-      }
-    },
-    {
-      "name": "Approve Booking - Admin",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-        ],
-        "url": "{{baseUrl}}/booking/bookings/{{bookingId}}/approve"
-      }
-    },
-    {
-      "name": "My Bookings - Student",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{studentToken}}" }
-        ],
-        "url": "{{baseUrl}}/booking/bookings/me"
-      }
+      ]
     }
   ]
-}
+}
