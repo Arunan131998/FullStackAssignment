@@ -181,9 +181,9 @@ function StudentDashboard() {
         </div>
       </div>
       <div className="card">
-        <h3>My Bookings</h3>
+        <h3>My Active Bookings</h3>
         <ul className="clean-list">
-          {bookings.map((booking) => (
+          {bookings.filter((b) => b.status === 'PENDING' || b.status === 'APPROVED').map((booking) => (
             <li key={booking._id} className="list-item-card booking-row">
               <div>
                 <strong>{renderBookingSlot(booking)}</strong>
@@ -204,11 +204,32 @@ function StudentDashboard() {
               </div>
             </li>
           ))}
-          {!bookings.length && <li className="empty-state">No bookings yet.</li>}
+          {!bookings.filter((b) => b.status === 'PENDING' || b.status === 'APPROVED').length && (
+            <li className="empty-state">No active bookings.</li>
+          )}
         </ul>
       </div>
       </div>
 
+      <div className="card">
+        <h3>Booking History</h3>
+        <ul className="clean-list">
+          {bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED').map((booking) => (
+            <li key={booking._id} className="list-item-card booking-row">
+              <div>
+                <strong>{renderBookingSlot(booking)}</strong>
+                <div className="muted-text">
+                  {booking.reviewedAt ? `Reviewed: ${new Date(booking.reviewedAt).toLocaleDateString()}` : `Submitted: ${new Date(booking.createdAt).toLocaleDateString()}`}
+                </div>
+              </div>
+              <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
+            </li>
+          ))}
+          {!bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED').length && (
+            <li className="empty-state">No past bookings.</li>
+          )}
+        </ul>
+      </div>
       <div className="card danger-zone">
         <h3>Account</h3>
         <p className="muted-text">Permanently delete your account. This cannot be undone.</p>

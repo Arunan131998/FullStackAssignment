@@ -6,6 +6,7 @@ function AdminDashboard() {
   const [slots, setSlots] = useState([]);
   const [pendingBookings, setPendingBookings] = useState([]);
   const [approvedBookings, setApprovedBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
   const [name, setName] = useState('Computer Networks Lab');
   const [location, setLocation] = useState('Block A, Floor 2');
   const [totalSeats, setTotalSeats] = useState(30);
@@ -52,6 +53,11 @@ function AdminDashboard() {
     setApprovedBookings(response.data?.data || []);
   }
 
+  async function fetchAllBookings() {
+    const response = await apiClient.get('/booking/bookings');
+    setAllBookings(response.data?.data || []);
+  }
+
   async function fetchUsers() {
     const response = await apiClient.get('/auth/users');
     setUsers(response.data?.data || []);
@@ -61,7 +67,7 @@ function AdminDashboard() {
     async function loadDashboardData() {
       setError('');
       try {
-        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings(), fetchUsers()]);
+        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings(), fetchUsers()]);
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
@@ -120,7 +126,7 @@ function AdminDashboard() {
     try {
       await apiClient.patch(`/booking/bookings/${bookingId}/${decision}`);
       setMessage(`Booking ${decision}d successfully`);
-      await Promise.all([fetchPendingBookings(), fetchApprovedBookings()]);
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings()]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || `Failed to ${decision} booking`);
     } finally {
@@ -135,7 +141,7 @@ function AdminDashboard() {
     try {
       await apiClient.patch(`/booking/bookings/${bookingId}/cancel`);
       setMessage('Booking cancelled successfully');
-      await Promise.all([fetchPendingBookings(), fetchApprovedBookings()]);
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings()]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Failed to cancel booking');
     } finally {
@@ -551,6 +557,28 @@ function AdminDashboard() {
             </li>
           ))}
           {!approvedBookings.length && <li className="empty-state">No approved bookings yet.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>All Booking History</h3>
+        <ul className="clean-list">
+          {allBookings.map((booking) => (
+            <li key={booking._id} className="list-item-card">
+              <div>
+                <strong>{renderPendingBookingSlot(booking)}</strong>
+                <div className="muted-text">Student: {booking.studentId}</div>
+                {booking.purpose && <div className="muted-text">Purpose: {booking.purpose}</div>}
+                <div className="muted-text">
+                  {booking.reviewedAt
+                    ? `Reviewed: ${new Date(booking.reviewedAt).toLocaleDateString()}`
+                    : `Submitted: ${new Date(booking.createdAt).toLocaleDateString()}`}
+                </div>
+              </div>
+              <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
+            </li>
+          ))}
+          {!allBookings.length && <li className="empty-state">No bookings found.</li>}
         </ul>
       </div>
 
