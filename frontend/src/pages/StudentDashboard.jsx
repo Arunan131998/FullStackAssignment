@@ -214,7 +214,7 @@ function StudentDashboard() {
       <div className="card">
         <h3>Booking History</h3>
         <ul className="clean-list">
-          {bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED').map((booking) => (
+          {bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED' || b.status === 'COMPLETED').map((booking) => (
             <li key={booking._id} className="list-item-card booking-row">
               <div>
                 <strong>{renderBookingSlot(booking)}</strong>
@@ -225,7 +225,7 @@ function StudentDashboard() {
               <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
             </li>
           ))}
-          {!bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED').length && (
+          {!bookings.filter((b) => b.status === 'REJECTED' || b.status === 'CANCELLED' || b.status === 'COMPLETED').length && (
             <li className="empty-state">No past bookings.</li>
           )}
         </ul>

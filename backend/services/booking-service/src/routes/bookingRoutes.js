@@ -351,6 +351,21 @@ router.patch('/bookings/:id/reject', requireAuth, requireAdmin, async (request, 
   return response.json({ data: booking });
 });
 
+router.patch('/bookings/:id/complete', requireAuth, requireAdmin, async (request, response) => {
+  const booking = await Booking.findById(request.params.id);
+  if (!booking) {
+    return response.status(404).json({ message: 'Booking not found' });
+  }
+  if (booking.status !== 'APPROVED') {
+    return response.status(409).json({ message: 'Only APPROVED bookings can be marked as completed' });
+  }
+  booking.status = 'COMPLETED';
+  booking.reviewedBy = request.user.id;
+  booking.reviewedAt = new Date();
+  await booking.save();
+  return response.json({ data: booking });
+});
+
 router.patch('/bookings/:id/cancel', requireAuth, async (request, response) => {
   const booking = await Booking.findById(request.params.id);
   if (!booking) {

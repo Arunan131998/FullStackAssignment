@@ -6,6 +6,7 @@ function AdminDashboard() {
   const [slots, setSlots] = useState([]);
   const [pendingBookings, setPendingBookings] = useState([]);
   const [approvedBookings, setApprovedBookings] = useState([]);
+  const [completedBookings, setCompletedBookings] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [name, setName] = useState('Computer Networks Lab');
   const [location, setLocation] = useState('Block A, Floor 2');
@@ -53,6 +54,11 @@ function AdminDashboard() {
     setApprovedBookings(response.data?.data || []);
   }
 
+  async function fetchCompletedBookings() {
+    const response = await apiClient.get('/booking/bookings', { params: { status: 'COMPLETED' } });
+    setCompletedBookings(response.data?.data || []);
+  }
+
   async function fetchAllBookings() {
     const response = await apiClient.get('/booking/bookings');
     setAllBookings(response.data?.data || []);
@@ -67,7 +73,7 @@ function AdminDashboard() {
     async function loadDashboardData() {
       setError('');
       try {
-        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings(), fetchUsers()]);
+        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings(), fetchCompletedBookings(), fetchAllBookings(), fetchUsers()]);
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
@@ -126,9 +132,24 @@ function AdminDashboard() {
     try {
       await apiClient.patch(`/booking/bookings/${bookingId}/${decision}`);
       setMessage(`Booking ${decision}d successfully`);
-      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings()]);
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchCompletedBookings(), fetchAllBookings()]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || `Failed to ${decision} booking`);
+    } finally {
+      setActiveBookingId('');
+    }
+  }
+
+  async function handleCompleteBooking(bookingId) {
+    setError('');
+    setMessage('');
+    setActiveBookingId(bookingId);
+    try {
+      await apiClient.patch(`/booking/bookings/${bookingId}/complete`);
+      setMessage('Booking marked as completed');
+      await Promise.all([fetchApprovedBookings(), fetchCompletedBookings(), fetchAllBookings()]);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to complete booking');
     } finally {
       setActiveBookingId('');
     }
@@ -141,7 +162,7 @@ function AdminDashboard() {
     try {
       await apiClient.patch(`/booking/bookings/${bookingId}/cancel`);
       setMessage('Booking cancelled successfully');
-      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchAllBookings()]);
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings(), fetchCompletedBookings(), fetchAllBookings()]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Failed to cancel booking');
     } finally {
@@ -547,6 +568,13 @@ function AdminDashboard() {
                 <span className="status-badge status-approved">APPROVED</span>
                 <button
                   type="button"
+                  disabled={activeBookingId === booking._id}
+                  onClick={() => handleCompleteBooking(booking._id)}
+                >
+                  {activeBookingId === booking._id ? 'Updating...' : 'Mark Complete'}
+                </button>
+                <button
+                  type="button"
                   className="danger-button"
                   disabled={activeBookingId === booking._id}
                   onClick={() => handleCancelBooking(booking._id)}
@@ -557,6 +585,26 @@ function AdminDashboard() {
             </li>
           ))}
           {!approvedBookings.length && <li className="empty-state">No approved bookings yet.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Completed Bookings</h3>
+        <ul className="clean-list">
+          {completedBookings.map((booking) => (
+            <li key={booking._id} className="list-item-card">
+              <div>
+                <strong>{renderPendingBookingSlot(booking)}</strong>
+                <div className="muted-text">Student ID: {booking.studentId}</div>
+                {booking.purpose && <div className="muted-text">Purpose: {booking.purpose}</div>}
+                {booking.reviewedAt && (
+                  <div className="muted-text">Completed: {new Date(booking.reviewedAt).toLocaleDateString()}</div>
+                )}
+              </div>
+              <span className="status-badge status-completed">COMPLETED</span>
+            </li>
+          ))}
+          {!completedBookings.length && <li className="empty-state">No completed bookings yet.</li>}
         </ul>
       </div>
 
