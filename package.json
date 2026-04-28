@@ -1,0 +1,16 @@
+{
+  "name": "lab-slot-booking-system",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:gateway": "npm --prefix backend/api-gateway run dev",
+    "dev:auth": "npm --prefix backend/services/auth-service run dev",
+    "dev:booking": "npm --prefix backend/services/booking-service run dev",
+    "dev": "concurrently \"npm run dev:auth\" \"npm run dev:booking\" \"npm run dev:gateway\" \"npm run dev:frontend\"",
+    "seed:users": "npm --prefix backend/services/auth-service run seed:users"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
