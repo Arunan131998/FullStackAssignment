@@ -1,7 +1,7 @@
 # Lab Slot Booking System
 
 **Course:** SE ZG503 Full Stack Application Development
-**Student:** Arunan Sundaramoorthy | 2025TM93064 | 2025tm93064@wilp.bits-pilani.ac.in
+**Student:** Arunan S | 2025TM93064 | 2025tm93064@wilp.bits-pilani.ac.in
 
 Full-stack lab slot booking application with a React frontend and Node.js microservice backend (API Gateway + Auth Service + Booking Service).
 
