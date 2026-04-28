@@ -25,9 +25,6 @@ const collection = {
     description: 'Complete API demo. Run folders in order: Auth > Labs > Slots > Bookings > User Management.',
     _exporter_id: '12345678',
   },
-  _postman_exported_at: '2026-04-28T00:00:00.000Z',
-  _postman_exported_using: 'Postman/10.0.0',
-  _postman_variable_scope: 'collection',
   variable: [
     { key: 'baseUrl', value: 'http://localhost:4000', type: 'default', enabled: true },
     { key: 'adminEmail', value: 'admin@example.com', type: 'default', enabled: true },
