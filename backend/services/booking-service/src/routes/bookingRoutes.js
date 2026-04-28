@@ -148,4 +148,40 @@ router.patch('/bookings/:id/reject', requireAuth, requireAdmin, async (request, 
   return response.json({ data: booking });
 });
 
+router.patch('/bookings/:id/cancel', requireAuth, async (request, response) => {
+  const booking = await Booking.findById(request.params.id);
+  if (!booking) {
+    return response.status(404).json({ message: 'Booking not found' });
+  }
+
+  const isAdmin = request.user?.role === 'admin';
+  const isOwner = booking.studentId === request.user?.id;
+
+  if (!isAdmin && !isOwner) {
+    return response.status(403).json({ message: 'You can only cancel your own booking' });
+  }
+
+  if (booking.status === 'CANCELLED') {
+    return response.status(409).json({ message: 'Booking is already cancelled' });
+  }
+
+  if (booking.status === 'COMPLETED') {
+    return response.status(409).json({ message: 'Completed bookings cannot be cancelled' });
+  }
+
+  if (booking.status === 'REJECTED') {
+    return response.status(409).json({ message: 'Rejected bookings cannot be cancelled' });
+  }
+
+  if (!isAdmin && booking.status !== 'PENDING') {
+    return response.status(409).json({ message: 'Students can only cancel pending bookings' });
+  }
+
+  booking.status = 'CANCELLED';
+  booking.reviewedBy = request.user.id;
+  booking.reviewedAt = new Date();
+  await booking.save();
+  return response.json({ data: booking });
+});
+
 module.exports = router;

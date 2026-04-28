@@ -19,3 +19,4 @@ Base URL through gateway: `http://localhost:4000`
 - `GET /booking/bookings` (admin)
 - `PATCH /booking/bookings/:id/approve` (admin)
 - `PATCH /booking/bookings/:id/reject` (admin)
+- `PATCH /booking/bookings/:id/cancel` (student own pending booking, admin)

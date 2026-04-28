@@ -7,6 +7,7 @@ function StudentDashboard() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isBooking, setIsBooking] = useState(false);
+  const [activeCancelId, setActiveCancelId] = useState('');
 
   async function fetchSlots() {
     const response = await apiClient.get('/booking/slots');
@@ -42,6 +43,21 @@ function StudentDashboard() {
       setError(requestError.response?.data?.message || 'Unable to create booking');
     } finally {
       setIsBooking(false);
+    }
+  }
+
+  async function handleCancelBooking(bookingId) {
+    setError('');
+    setMessage('');
+    setActiveCancelId(bookingId);
+    try {
+      await apiClient.patch(`/booking/bookings/${bookingId}/cancel`);
+      setMessage('Booking cancelled successfully');
+      await Promise.all([fetchSlots(), fetchMyBookings()]);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Unable to cancel booking');
+    } finally {
+      setActiveCancelId('');
     }
   }
 
@@ -93,7 +109,19 @@ function StudentDashboard() {
                 <strong>{renderBookingSlot(booking)}</strong>
                 <div className="muted-text">Submitted booking request</div>
               </div>
-              <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
+              <div className="inline-actions">
+                <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
+                {booking.status === 'PENDING' && (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    disabled={activeCancelId === booking._id}
+                    onClick={() => handleCancelBooking(booking._id)}
+                  >
+                    {activeCancelId === booking._id ? 'Cancelling...' : 'Cancel'}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
           {!bookings.length && <li className="empty-state">No bookings yet.</li>}
