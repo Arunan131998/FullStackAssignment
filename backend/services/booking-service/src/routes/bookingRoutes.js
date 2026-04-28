@@ -45,6 +45,27 @@ router.post('/labs', requireAuth, requireAdmin, async (request, response) => {
   }
 });
 
+router.delete('/labs/:id', requireAuth, requireAdmin, async (request, response) => {
+  try {
+    const lab = await Lab.findById(request.params.id);
+    if (!lab) {
+      return response.status(404).json({ message: 'Lab not found' });
+    }
+    const activeSlotCount = await Slot.countDocuments({ labId: request.params.id, isActive: true });
+    if (activeSlotCount > 0) {
+      return response.status(409).json({
+        message: `Cannot delete lab: it has ${activeSlotCount} active slot(s). Delete all slots first.`,
+      });
+    }
+    await Lab.findByIdAndDelete(request.params.id);
+    await Slot.deleteMany({ labId: request.params.id });
+    return response.json({ message: 'Lab deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE /labs/:id] error:', error.message);
+    return response.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/slots', async (request, response) => {
   const filters = {};
   if (request.query.labId) filters.labId = request.query.labId;

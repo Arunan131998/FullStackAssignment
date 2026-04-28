@@ -24,6 +24,7 @@ function AdminDashboard() {
   const [editingSlotId, setEditingSlotId] = useState('');
   const [editSlot, setEditSlot] = useState({});
   const [deletingSlotId, setDeletingSlotId] = useState('');
+  const [deletingLabId, setDeletingLabId] = useState('');
   const today = new Date().toISOString().split('T')[0];
   const selectedLab = labs.find((lab) => lab._id === selectedLabId);
 
@@ -193,6 +194,21 @@ function AdminDashboard() {
     }
   }
 
+  async function handleDeleteLab(labId) {
+    setError('');
+    setMessage('');
+    setDeletingLabId(labId);
+    try {
+      await apiClient.delete(`/booking/labs/${labId}`);
+      setMessage('Lab deleted successfully');
+      await Promise.all([fetchLabs(), fetchSlots()]);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to delete lab');
+    } finally {
+      setDeletingLabId('');
+    }
+  }
+
   function renderPendingBookingSlot(booking) {
     const slot = booking.slotId;
     if (!slot || typeof slot === 'string') {
@@ -327,6 +343,14 @@ function AdminDashboard() {
               <div className="summary-badges">
                 <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
                 <span className="status-badge neutral-badge">Slots: {availabilityByLab.find((entry) => entry._id === lab._id)?.totalSlots || 0}</span>
+                <button
+                  className="btn-danger-sm"
+                  disabled={deletingLabId === lab._id}
+                  onClick={() => handleDeleteLab(lab._id)}
+                  type="button"
+                >
+                  {deletingLabId === lab._id ? 'Deleting...' : 'Delete'}
+                </button>
               </div>
             </li>
           ))}
