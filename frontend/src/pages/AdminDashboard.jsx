@@ -21,6 +21,9 @@ function AdminDashboard() {
   const [activeBookingId, setActiveBookingId] = useState('');
   const [users, setUsers] = useState([]);
   const [deletingUserId, setDeletingUserId] = useState('');
+  const [editingSlotId, setEditingSlotId] = useState('');
+  const [editSlot, setEditSlot] = useState({});
+  const [deletingSlotId, setDeletingSlotId] = useState('');
   const today = new Date().toISOString().split('T')[0];
   const selectedLab = labs.find((lab) => lab._id === selectedLabId);
 
@@ -149,6 +152,44 @@ function AdminDashboard() {
       setError(requestError.response?.data?.message || 'Failed to delete user');
     } finally {
       setDeletingUserId('');
+    }
+  }
+
+  function startEditSlot(slot) {
+    setEditingSlotId(slot._id);
+    setEditSlot({
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      capacity: slot.capacity,
+    });
+  }
+
+  async function handleEditSlot(slotId) {
+    setError('');
+    setMessage('');
+    try {
+      await apiClient.patch(`/booking/slots/${slotId}`, editSlot);
+      setMessage('Slot updated successfully');
+      setEditingSlotId('');
+      await fetchSlots();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to update slot');
+    }
+  }
+
+  async function handleDeleteSlot(slotId) {
+    setError('');
+    setMessage('');
+    setDeletingSlotId(slotId);
+    try {
+      await apiClient.delete(`/booking/slots/${slotId}`);
+      setMessage('Slot deleted successfully');
+      await fetchSlots();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to delete slot');
+    } finally {
+      setDeletingSlotId('');
     }
   }
 
@@ -297,17 +338,73 @@ function AdminDashboard() {
         <h3>Existing Slots</h3>
         <ul className="clean-list">
           {slots.map((slot) => (
-            <li key={slot._id} className="list-item-card">
-              <div>
-                <strong>{slot.labId?.name || 'Lab slot'}</strong>
-                <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
-              </div>
-              <div className="summary-badges">
-                <span className="status-badge neutral-badge">Capacity: {slot.capacity}</span>
-                <span className={`status-badge ${slot.isAvailable ? 'status-approved' : 'status-cancelled'}`}>
-                  Remaining: {slot.remainingCapacity || 0}
-                </span>
-              </div>
+            <li key={slot._id} className={`list-item-card ${editingSlotId === slot._id ? 'slot-editing-row' : ''}`}>
+              {editingSlotId === slot._id ? (
+                <div className="slot-edit-form">
+                  <div className="slot-edit-fields">
+                    <label>
+                      Date
+                      <input
+                        type="date"
+                        min={today}
+                        value={editSlot.date}
+                        onChange={(e) => setEditSlot((prev) => ({ ...prev, date: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Start Time
+                      <input
+                        type="time"
+                        value={editSlot.startTime}
+                        onChange={(e) => setEditSlot((prev) => ({ ...prev, startTime: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      End Time
+                      <input
+                        type="time"
+                        value={editSlot.endTime}
+                        onChange={(e) => setEditSlot((prev) => ({ ...prev, endTime: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Capacity
+                      <input
+                        type="number"
+                        min="1"
+                        value={editSlot.capacity}
+                        onChange={(e) => setEditSlot((prev) => ({ ...prev, capacity: Number(e.target.value) }))}
+                      />
+                    </label>
+                  </div>
+                  <div className="inline-actions" style={{ marginTop: '8px' }}>
+                    <button type="button" onClick={() => handleEditSlot(slot._id)}>Save</button>
+                    <button type="button" className="secondary-button" onClick={() => setEditingSlotId('')}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <strong>{slot.labId?.name || 'Lab slot'}</strong>
+                    <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
+                    <div className="muted-text">Capacity: {slot.capacity} | Remaining: {slot.remainingCapacity || 0}</div>
+                  </div>
+                  <div className="inline-actions">
+                    <span className={`status-badge ${slot.isAvailable ? 'status-approved' : 'status-cancelled'}`}>
+                      {slot.isAvailable ? 'Open' : 'Full'}
+                    </span>
+                    <button type="button" className="secondary-button" onClick={() => startEditSlot(slot)}>Edit</button>
+                    <button
+                      type="button"
+                      className="danger-button"
+                      disabled={deletingSlotId === slot._id}
+                      onClick={() => handleDeleteSlot(slot._id)}
+                    >
+                      {deletingSlotId === slot._id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
           {!slots.length && <li className="empty-state">No slots created yet.</li>}

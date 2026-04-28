@@ -129,6 +129,84 @@ router.post('/slots', requireAuth, requireAdmin, async (request, response) => {
   return response.status(201).json({ data: slot });
 });
 
+router.patch('/slots/:id', requireAuth, requireAdmin, async (request, response) => {
+  const { date, startTime, endTime, capacity } = request.body;
+
+  const slot = await Slot.findById(request.params.id);
+  if (!slot) {
+    return response.status(404).json({ message: 'Slot not found' });
+  }
+
+  const newDate = date || slot.date;
+  const newStart = startTime || slot.startTime;
+  const newEnd = endTime || slot.endTime;
+  const newCapacity = capacity != null ? Number(capacity) : slot.capacity;
+
+  if (hasInvalidTimeRange(newStart, newEnd)) {
+    return response.status(400).json({ message: 'endTime must be later than startTime' });
+  }
+
+  if (isPastSlot(newDate, newStart)) {
+    return response.status(400).json({ message: 'Cannot move slot to a past date/time' });
+  }
+
+  const lab = await Lab.findById(slot.labId);
+  if (lab && newCapacity > lab.totalSeats) {
+    return response.status(400).json({
+      message: `Slot capacity cannot exceed the lab seats (${lab.totalSeats})`,
+    });
+  }
+
+  const approvedCount = await Booking.countDocuments({ slotId: slot._id, status: 'APPROVED' });
+  if (newCapacity < approvedCount) {
+    return response.status(400).json({
+      message: `Cannot reduce capacity below current approved bookings (${approvedCount})`,
+    });
+  }
+
+  const conflictingSlot = await Slot.findOne({
+    _id: { $ne: slot._id },
+    labId: slot.labId,
+    date: newDate,
+    isActive: true,
+    startTime: { $lt: newEnd },
+    endTime: { $gt: newStart },
+  });
+
+  if (conflictingSlot) {
+    return response.status(409).json({ message: 'Updated time overlaps with another slot in this lab' });
+  }
+
+  slot.date = newDate;
+  slot.startTime = newStart;
+  slot.endTime = newEnd;
+  slot.capacity = newCapacity;
+  await slot.save();
+
+  return response.json({ data: slot });
+});
+
+router.delete('/slots/:id', requireAuth, requireAdmin, async (request, response) => {
+  const slot = await Slot.findById(request.params.id);
+  if (!slot) {
+    return response.status(404).json({ message: 'Slot not found' });
+  }
+
+  const activeBookings = await Booking.countDocuments({
+    slotId: slot._id,
+    status: { $in: ['PENDING', 'APPROVED'] },
+  });
+
+  if (activeBookings > 0) {
+    return response.status(409).json({
+      message: `Cannot delete slot with ${activeBookings} active booking(s). Cancel them first.`,
+    });
+  }
+
+  await Slot.findByIdAndDelete(request.params.id);
+  return response.json({ message: 'Slot deleted successfully' });
+});
+
 router.post('/bookings', requireAuth, async (request, response) => {
   const { slotId, purpose } = request.body;
   if (!slotId) {

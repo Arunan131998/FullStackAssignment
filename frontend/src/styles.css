@@ -355,6 +355,22 @@ button:disabled {
   gap: 12px;
 }
 
+.slot-editing-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.slot-edit-form {
+  width: 100%;
+}
+
+.slot-edit-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
 .lab-summary-card {
   align-items: center;
 }
