@@ -92,9 +92,8 @@ Demo credentials:
 
 - Swagger UI: `http://localhost:4000/api-docs`
 - OpenAPI spec: `docs/openapi.yaml`
-- Postman collection: `docs/postman/LabSlotBooking_Demo.postman_collection.json`
 
-## Available Root Scripts
+## Available Root Commands
 
 - `npm run dev` - start frontend + all backend services
 - `npm run dev:frontend` - start frontend only
