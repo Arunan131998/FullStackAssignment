@@ -10,6 +10,14 @@ function hasInvalidTimeRange(startTime, endTime) {
   return startTime >= endTime;
 }
 
+function isPastSlot(date, startTime) {
+  const slotDateTime = new Date(`${date}T${startTime}:00`);
+  if (Number.isNaN(slotDateTime.getTime())) {
+    return false;
+  }
+  return slotDateTime.getTime() < Date.now();
+}
+
 router.get('/labs', async (request, response) => {
   try {
     const labs = await Lab.find().sort({ createdAt: -1 });
@@ -55,6 +63,10 @@ router.post('/slots', requireAuth, requireAdmin, async (request, response) => {
 
   if (hasInvalidTimeRange(startTime, endTime)) {
     return response.status(400).json({ message: 'endTime must be later than startTime' });
+  }
+
+  if (isPastSlot(date, startTime)) {
+    return response.status(400).json({ message: 'Cannot create slots in the past' });
   }
 
   const conflictingSlot = await Slot.findOne({

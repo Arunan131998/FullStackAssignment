@@ -234,6 +234,10 @@ button:disabled {
   color: var(--error-text);
 }
 
+.form-alert {
+  margin: 4px 0 0;
+}
+
 .section-heading {
   margin-bottom: 14px;
 }

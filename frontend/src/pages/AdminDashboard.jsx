@@ -15,7 +15,10 @@ function AdminDashboard() {
   const [capacity, setCapacity] = useState(10);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [labError, setLabError] = useState('');
+  const [slotError, setSlotError] = useState('');
   const [activeBookingId, setActiveBookingId] = useState('');
+  const today = new Date().toISOString().split('T')[0];
 
   async function fetchLabs() {
     const response = await apiClient.get('/booking/labs');
@@ -50,12 +53,13 @@ function AdminDashboard() {
     event.preventDefault();
     setMessage('');
     setError('');
+    setLabError('');
     try {
       await apiClient.post('/booking/labs', { name, location, totalSeats });
       setMessage('Lab created successfully');
       await fetchLabs();
-    } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create lab');
+    } catch (requestError) {
+      setLabError(requestError.response?.data?.message || 'Failed to create lab');
     }
   }
 
@@ -63,6 +67,7 @@ function AdminDashboard() {
     event.preventDefault();
     setMessage('');
     setError('');
+    setSlotError('');
     try {
       await apiClient.post('/booking/slots', {
         labId: selectedLabId,
@@ -78,7 +83,7 @@ function AdminDashboard() {
       setCapacity(10);
       await fetchSlots();
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Failed to create slot');
+      setSlotError(requestError.response?.data?.message || 'Failed to create slot');
     }
   }
 
@@ -139,6 +144,7 @@ function AdminDashboard() {
             />
           </label>
           <button type="submit">Create Lab</button>
+          {labError && <p className="alert alert-error form-alert">{labError}</p>}
         </form>
 
         <form className="card form" onSubmit={handleCreateSlot}>
@@ -156,7 +162,7 @@ function AdminDashboard() {
           </label>
           <label>
             Date
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
+            <input type="date" min={today} value={date} onChange={(event) => setDate(event.target.value)} required />
           </label>
           <label>
             Start Time
@@ -177,6 +183,7 @@ function AdminDashboard() {
             />
           </label>
           <button type="submit" disabled={!labs.length}>Create Slot</button>
+          {slotError && <p className="alert alert-error form-alert">{slotError}</p>}
           {!labs.length && <p>Create a lab first before adding slots.</p>}
         </form>
       </div>
