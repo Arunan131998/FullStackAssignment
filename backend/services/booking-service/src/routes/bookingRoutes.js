@@ -111,6 +111,23 @@ router.post('/bookings', requireAuth, async (request, response) => {
     return response.status(409).json({ message: 'Booking already exists for this slot' });
   }
 
+  const overlappingBookings = await Booking.find({
+    studentId: request.user.id,
+    status: { $in: ['PENDING', 'APPROVED'] },
+  }).populate('slotId');
+
+  for (const existingBooking of overlappingBookings) {
+    const existingSlot = existingBooking.slotId;
+    if (existingSlot.date === slot.date) {
+      const overlap = existingSlot.startTime < slot.endTime && existingSlot.endTime > slot.startTime;
+      if (overlap) {
+        return response.status(409).json({
+          message: `You already have a booking on ${slot.date} from ${existingSlot.startTime} to ${existingSlot.endTime}`,
+        });
+      }
+    }
+  }
+
   const booking = await Booking.create({
     studentId: request.user.id,
     slotId,
