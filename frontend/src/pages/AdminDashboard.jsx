@@ -77,9 +77,15 @@ function AdminDashboard() {
 
   return (
     <section>
-      <h2>Admin Dashboard</h2>
-      {error && <p>{error}</p>}
-      {message && <p>{message}</p>}
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Admin workspace</p>
+          <h2>Admin Dashboard</h2>
+          <p className="muted-text">Manage labs, create slots, and review what is already scheduled before adding new sessions.</p>
+        </div>
+      </div>
+      {error && <p className="alert alert-error">{error}</p>}
+      {message && <p className="alert alert-success">{message}</p>}
       <div className="dashboard-grid">
         <form className="card form" onSubmit={handleCreateLab}>
           <h3>Create Lab</h3>
@@ -146,26 +152,33 @@ function AdminDashboard() {
 
       <div className="card">
         <h3>Existing Labs</h3>
-        <ul>
+        <ul className="clean-list">
           {labs.map((lab) => (
-            <li key={lab._id}>
-              {lab.name} | {lab.location} | Seats: {lab.totalSeats}
+            <li key={lab._id} className="list-item-card">
+              <div>
+                <strong>{lab.name}</strong>
+                <div className="muted-text">{lab.location}</div>
+              </div>
+              <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
             </li>
           ))}
-          {!labs.length && <li>No labs created yet.</li>}
+          {!labs.length && <li className="empty-state">No labs created yet.</li>}
         </ul>
       </div>
 
       <div className="card">
         <h3>Existing Slots</h3>
-        <ul>
+        <ul className="clean-list">
           {slots.map((slot) => (
-            <li key={slot._id}>
-              {slot.labId?.name ? `${slot.labId.name} | ` : ''}
-              {slot.date} | {slot.startTime} - {slot.endTime} | Capacity: {slot.capacity}
+            <li key={slot._id} className="list-item-card">
+              <div>
+                <strong>{slot.labId?.name || 'Lab slot'}</strong>
+                <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
+              </div>
+              <span className="status-badge neutral-badge">Capacity: {slot.capacity}</span>
             </li>
           ))}
-          {!slots.length && <li>No slots created yet.</li>}
+          {!slots.length && <li className="empty-state">No slots created yet.</li>}
         </ul>
       </div>
     </section>

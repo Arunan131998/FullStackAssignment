@@ -56,36 +56,49 @@ function StudentDashboard() {
 
   return (
     <section>
-      <h2>Student Dashboard</h2>
-      {error && <p>{error}</p>}
-      {message && <p>{message}</p>}
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Student workspace</p>
+          <h2>Student Dashboard</h2>
+          <p className="muted-text">View current slots and track every booking request in one place.</p>
+        </div>
+      </div>
+      {error && <p className="alert alert-error">{error}</p>}
+      {message && <p className="alert alert-success">{message}</p>}
+      <div className="dashboard-grid two-column-grid">
       <div className="card">
         <h3>Available Slots</h3>
-        <ul>
+        <ul className="clean-list">
           {slots.map((slot) => (
-            <li key={slot._id} className="slot-row">
-              <span>
-                {slot.date} | {slot.startTime} - {slot.endTime} | Capacity: {slot.capacity}
-                {slot.labId?.name ? ` | Lab: ${slot.labId.name}` : ''}
-              </span>
+            <li key={slot._id} className="slot-row list-item-card">
+              <div>
+                <strong>{slot.labId?.name || 'Lab slot'}</strong>
+                <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
+                <div className="muted-text">Capacity: {slot.capacity}</div>
+              </div>
               <button type="button" onClick={() => handleBookSlot(slot._id)} disabled={isBooking}>
                 {isBooking ? 'Booking...' : 'Book Slot'}
               </button>
             </li>
           ))}
-          {!slots.length && <li>No slots available yet.</li>}
+          {!slots.length && <li className="empty-state">No slots available yet.</li>}
         </ul>
       </div>
       <div className="card">
         <h3>My Bookings</h3>
-        <ul>
+        <ul className="clean-list">
           {bookings.map((booking) => (
-            <li key={booking._id}>
-              {renderBookingSlot(booking)} | Status: {booking.status}
+            <li key={booking._id} className="list-item-card booking-row">
+              <div>
+                <strong>{renderBookingSlot(booking)}</strong>
+                <div className="muted-text">Submitted booking request</div>
+              </div>
+              <span className={`status-badge status-${booking.status?.toLowerCase()}`}>{booking.status}</span>
             </li>
           ))}
-          {!bookings.length && <li>No bookings yet.</li>}
+          {!bookings.length && <li className="empty-state">No bookings yet.</li>}
         </ul>
+      </div>
       </div>
     </section>
   );

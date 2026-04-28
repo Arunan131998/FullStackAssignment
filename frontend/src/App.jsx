@@ -26,17 +26,20 @@ function App() {
 
   return (
     <div className="container">
-      <header>
-        <h1>Lab Slot Booking</h1>
-        <nav>
+      <header className="app-header">
+        <div>
+          <p className="eyebrow">Campus Resource Manager</p>
+          <h1>Lab Slot Booking</h1>
+        </div>
+        <nav className="nav-actions">
           {!isLoggedIn && <Link to="/">Login</Link>}
           {isLoggedIn && userRole === 'student' && <Link to="/student">Student</Link>}
           {isLoggedIn && userRole === 'admin' && <Link to="/admin">Admin</Link>}
-          {isLoggedIn && <button onClick={handleLogout}>Logout</button>}
+          {isLoggedIn && <button className="secondary-button" onClick={handleLogout}>Logout</button>}
         </nav>
       </header>
 
-      <main>
+      <main className="page-shell">
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />

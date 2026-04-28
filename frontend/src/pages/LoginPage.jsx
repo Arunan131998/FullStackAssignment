@@ -58,9 +58,18 @@ function LoginPage() {
   }
 
   return (
-    <section>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin} className="card form">
+    <section className="hero-layout">
+      <div className="hero-copy">
+        <p className="eyebrow">Smart scheduling</p>
+        <h2>Login to manage lab bookings with less confusion.</h2>
+        <p className="muted-text">
+          Students can book available sessions and admins can organise labs, create slots, and avoid timing clashes.
+        </p>
+      </div>
+
+      <form onSubmit={handleLogin} className="card form auth-card">
+        <h3>Welcome back</h3>
+        <p className="muted-text">Choose your account type and continue with the demo credentials or your own account.</p>
         <label>
           Login as
           <select value={accountType} onChange={(event) => setAccountType(event.target.value)}>
@@ -77,8 +86,8 @@ function LoginPage() {
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         </label>
         <button type="submit">Login</button>
+        {message && <p className="alert alert-error">{message}</p>}
       </form>
-      {message && <p>{message}</p>}
     </section>
   );
 }
