@@ -1,112 +1,108 @@
 # Lab Slot Booking System
 
-Monorepo scaffold for a full-stack assignment project using React frontend and Node.js microservice-style backend.
+Full-stack lab slot booking application with a React frontend and Node.js microservice backend (API Gateway + Auth Service + Booking Service).
 
-## Structure
+## What this project includes
 
-- `frontend` - React app (Vite)
-- `backend/api-gateway` - API gateway proxy
-- `backend/services/auth-service` - Auth and user endpoints
-- `backend/services/booking-service` - Labs, slots, bookings endpoints
-- `docs` - architecture, schema, and API notes
+- JWT-based authentication with role-aware login (admin/student)
+- Admin lab management (create, edit, delete)
+- Admin slot management (create, edit, delete) with overlap/date/capacity validation
+- Student booking flow (book, view, cancel own pending bookings)
+- Admin booking review flow (approve, reject, cancel)
+- User management with last-admin deletion safeguard
+- Swagger docs via gateway at `/api-docs`
 
-## Quick Start
+## Tech Stack
 
-1. Start MongoDB locally and ensure it's available at `mongodb://127.0.0.1:27017/lab-slot-booking`.
-2. `.env` files are already scaffolded for local development. Update `JWT_SECRET` for production-like runs.
-3. Install dependencies:
-   - `npm install`
-   - `npm --prefix frontend install`
-   - `npm --prefix backend/api-gateway install`
-   - `npm --prefix backend/services/auth-service install`
-   - `npm --prefix backend/services/booking-service install`
-4. Start all services:
-   - `npm run dev`
-5. Seed demo users:
-   - `npm run seed:users`
+- Frontend: React 18, Vite, React Router, Axios
+- Backend: Express, Mongoose, JWT, bcrypt
+- Database: MongoDB
+- Dev tooling: Nodemon, Concurrently
 
-## Default Ports
+## Monorepo Structure
+
+- `frontend/` - React app
+- `backend/api-gateway/` - Gateway and Swagger UI host
+- `backend/services/auth-service/` - Auth and user APIs
+- `backend/services/booking-service/` - Lab, slot, booking APIs
+- `docs/` - API and architecture documentation
+
+## Prerequisites
+
+- Node.js 18+
+- npm 9+
+- MongoDB running locally or remotely
+
+## Environment Setup
+
+1. Copy `.env.example` to `.env` in the project root.
+2. Update values as needed:
+   - `MONGO_URI`
+   - `JWT_SECRET`
+   - `AUTH_SERVICE_PORT`
+   - `BOOKING_SERVICE_PORT`
+   - `API_GATEWAY_PORT`
+   - `VITE_API_BASE_URL`
+
+Default local values are configured for:
 
 - API Gateway: `4000`
 - Auth Service: `4001`
 - Booking Service: `4002`
-- Frontend (Vite): `5173`
+- Frontend: `5173`
 
-## Features
+## Install
 
-### Authentication
-- ✅ Role-based login (Student/Admin account type selector)
-- ✅ Account type validation (prevents role mismatch)
-- ✅ Demo credential auto-fill for quick testing
-- ✅ JWT token-based session management
-- ✅ Session-only auth (cleared on browser close)
+```bash
+npm install
+npm --prefix frontend install
+npm --prefix backend/api-gateway install
+npm --prefix backend/services/auth-service install
+npm --prefix backend/services/booking-service install
+```
 
-### Lab Management (Admin)
-- ✅ Create labs with name, location, total seats, equipment tags
-- ✅ View all labs and their details
-- ✅ Future: Edit and delete labs
+## Run (all services)
 
-### Slot Management (Admin)
-- ✅ Create time slots for specific labs
-- ✅ Prevent creating past slots (backend + frontend date validation)
-- ✅ Prevent overlapping time slots for same lab on same date
-- ✅ Validate time range (startTime < endTime)
-- ✅ View all slots with lab and capacity info
-- ✅ Future: Edit and delete slots
+```bash
+npm run dev
+```
 
-### Student Booking
-- ✅ Browse all available lab slots by date and time
-- ✅ Book a slot with purpose/reason
-- ✅ Validation: Cannot book past slots
-- ✅ Validation: Cannot book same slot twice (duplicate prevention)
-- ✅ Validation: Cannot have overlapping bookings on same date (time conflict prevention)
-- ✅ Validation: Cannot exceed slot capacity
-- ✅ View "My Bookings" with all personal bookings and their statuses
-- ✅ Cancel pending bookings (status=PENDING only)
+This starts:
 
-### Admin Booking Management
-- ✅ View pending booking requests queue
-- ✅ Approve pending bookings (transitions to APPROVED status)
-- ✅ Reject pending bookings (transitions to REJECTED status)
-- ✅ View approved bookings queue
-- ✅ Cancel any approved or pending booking if needed
-- ✅ Track who approved/rejected and when
+- Frontend (`http://localhost:5173`)
+- API Gateway (`http://localhost:4000`)
+- Auth Service (`http://localhost:4001`)
+- Booking Service (`http://localhost:4002`)
 
-### Business Rules
-- ✅ No past slot creation or booking
-- ✅ No overlapping time slots on same lab/date
-- ✅ No student double-booking on same date/time
-- ✅ Capacity management (cannot over-book slots)
-- ✅ Status workflow enforcement:
-  - PENDING → APPROVED/REJECTED or CANCELLED
-  - APPROVED → CANCELLED (admin only)
-  - Students can only cancel PENDING bookings they own
-  - Admins can cancel PENDING or APPROVED bookings
+## Seed Demo Users
 
-### UI/UX
-- ✅ Modern, responsive design (mobile-friendly)
-- ✅ Form-level error messages (specific, actionable feedback)
-- ✅ Status badges color-coded (PENDING, APPROVED, REJECTED, CANCELLED)
-- ✅ Role-based navigation (student vs. admin dashboards)
-- ✅ Real-time updates after actions (book, cancel, approve, reject)
-- ✅ Clean hero login layout with role selector
+```bash
+npm run seed:users
+```
 
-## Demo Credentials
+Demo credentials:
 
 - Admin: `admin@example.com` / `Admin@123`
 - Student: `student@example.com` / `Student@123`
 
-Both credentials are auto-filled in the login form for quick testing. Select the appropriate account type (Admin/User) before logging in.
+## API and Docs
 
-## Postman Demo
+- Swagger UI: `http://localhost:4000/api-docs`
+- OpenAPI spec: `docs/openapi.yaml`
+- Postman collection: `docs/postman/LabSlotBooking_Demo.postman_collection.json`
 
-- Import collection: `docs/postman/LabSlotBooking_Demo.postman_collection.json`
-- Import environment: `docs/postman/LabSlotBooking_Local.postman_environment.json`
-- Run requests in order to demonstrate login, lab/slot creation, booking, and approval workflow.
+## Available Root Scripts
 
-## Documentation
+- `npm run dev` - start frontend + all backend services
+- `npm run dev:frontend` - start frontend only
+- `npm run dev:gateway` - start API gateway only
+- `npm run dev:auth` - start auth service only
+- `npm run dev:booking` - start booking service only
+- `npm run seed:users` - seed demo users
 
-- **[API_OVERVIEW.md](docs/API_OVERVIEW.md)** - Complete API endpoint documentation with request/response examples and validation rules
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture, component interactions, and workflows
-- **[DB_SCHEMA.md](docs/DB_SCHEMA.md)** - MongoDB schema definitions, relationships, and constraints
+## Additional Documentation
+
+- `docs/API_OVERVIEW.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DB_SCHEMA.md`
 
