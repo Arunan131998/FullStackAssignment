@@ -20,6 +20,7 @@ function AdminDashboard() {
   const [slotError, setSlotError] = useState('');
   const [activeBookingId, setActiveBookingId] = useState('');
   const today = new Date().toISOString().split('T')[0];
+  const selectedLab = labs.find((lab) => lab._id === selectedLabId);
 
   async function fetchLabs() {
     const response = await apiClient.get('/booking/labs');
@@ -74,6 +75,12 @@ function AdminDashboard() {
     setMessage('');
     setError('');
     setSlotError('');
+
+    if (selectedLab && Number(capacity) > Number(selectedLab.totalSeats)) {
+      setSlotError(`Slot capacity cannot exceed the lab seats (${selectedLab.totalSeats})`);
+      return;
+    }
+
     try {
       await apiClient.post('/booking/slots', {
         labId: selectedLabId,
@@ -230,11 +237,15 @@ function AdminDashboard() {
             <input
               type="number"
               min="1"
+              max={selectedLab?.totalSeats || undefined}
               value={capacity}
               onChange={(event) => setCapacity(Number(event.target.value))}
               required
             />
           </label>
+          {selectedLab && (
+            <p className="muted-text">Maximum allowed for this lab: {selectedLab.totalSeats} seats</p>
+          )}
           <button type="submit" disabled={!labs.length}>Create Slot</button>
           {slotError && <p className="alert alert-error form-alert">{slotError}</p>}
           {!labs.length && <p>Create a lab first before adding slots.</p>}

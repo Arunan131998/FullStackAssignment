@@ -94,6 +94,17 @@ router.post('/slots', requireAuth, requireAdmin, async (request, response) => {
     return response.status(400).json({ message: 'labId, date, startTime, endTime, capacity are required' });
   }
 
+  const lab = await Lab.findById(labId);
+  if (!lab) {
+    return response.status(404).json({ message: 'Lab not found' });
+  }
+
+  if (Number(capacity) > lab.totalSeats) {
+    return response.status(400).json({
+      message: `Slot capacity cannot exceed the lab seats (${lab.totalSeats})`,
+    });
+  }
+
   if (hasInvalidTimeRange(startTime, endTime)) {
     return response.status(400).json({ message: 'endTime must be later than startTime' });
   }
