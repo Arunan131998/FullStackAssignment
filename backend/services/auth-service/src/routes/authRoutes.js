@@ -89,4 +89,51 @@ router.get('/me', requireAuth, async (request, response) => {
   }
 });
 
+// GET /users - list all users (admin only)
+router.get('/users', requireAuth, async (request, response) => {
+  if (request.user.role !== 'admin') {
+    return response.status(403).json({ message: 'Admin access required' });
+  }
+  try {
+    const users = await User.find().select('-passwordHash').sort({ createdAt: -1 });
+    return response.json({ data: users });
+  } catch (error) {
+    console.error('[GET /users] error:', error.message);
+    return response.status(500).json({ message: error.message });
+  }
+});
+
+// DELETE /users/:id - admin can delete any user, user can delete their own account
+router.delete('/users/:id', requireAuth, async (request, response) => {
+  const targetId = request.params.id;
+  const isAdmin = request.user.role === 'admin';
+  const isSelf = request.user.id === targetId;
+
+  if (!isAdmin && !isSelf) {
+    return response.status(403).json({ message: 'You can only delete your own account' });
+  }
+
+  try {
+    const user = await User.findById(targetId);
+    if (!user) {
+      return response.status(404).json({ message: 'User not found' });
+    }
+
+    // Prevent deleting the last admin
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return response.status(400).json({ message: 'Cannot delete the last admin account' });
+      }
+    }
+
+    await User.findByIdAndDelete(targetId);
+    console.log('[DELETE /users] deleted user:', user.email);
+    return response.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE /users] error:', error.message);
+    return response.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

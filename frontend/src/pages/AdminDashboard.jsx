@@ -19,6 +19,8 @@ function AdminDashboard() {
   const [labError, setLabError] = useState('');
   const [slotError, setSlotError] = useState('');
   const [activeBookingId, setActiveBookingId] = useState('');
+  const [users, setUsers] = useState([]);
+  const [deletingUserId, setDeletingUserId] = useState('');
   const today = new Date().toISOString().split('T')[0];
   const selectedLab = labs.find((lab) => lab._id === selectedLabId);
 
@@ -44,11 +46,16 @@ function AdminDashboard() {
     setApprovedBookings(response.data?.data || []);
   }
 
+  async function fetchUsers() {
+    const response = await apiClient.get('/auth/users');
+    setUsers(response.data?.data || []);
+  }
+
   useEffect(() => {
     async function loadDashboardData() {
       setError('');
       try {
-        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings()]);
+        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings(), fetchUsers()]);
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
@@ -127,6 +134,21 @@ function AdminDashboard() {
       setError(requestError.response?.data?.message || 'Failed to cancel booking');
     } finally {
       setActiveBookingId('');
+    }
+  }
+
+  async function handleDeleteUser(userId) {
+    setError('');
+    setMessage('');
+    setDeletingUserId(userId);
+    try {
+      await apiClient.delete(`/auth/users/${userId}`);
+      setMessage('User deleted successfully');
+      await fetchUsers();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setDeletingUserId('');
     }
   }
 
@@ -349,6 +371,34 @@ function AdminDashboard() {
             </li>
           ))}
           {!approvedBookings.length && <li className="empty-state">No approved bookings yet.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Registered Users</h3>
+        <ul className="clean-list">
+          {users.map((user) => (
+            <li key={user._id} className="list-item-card">
+              <div>
+                <strong>{user.name}</strong>
+                <div className="muted-text">{user.email}</div>
+              </div>
+              <div className="inline-actions">
+                <span className={`status-badge ${user.role === 'admin' ? 'neutral-badge' : 'status-pending'}`}>
+                  {user.role}
+                </span>
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={deletingUserId === user._id}
+                  onClick={() => handleDeleteUser(user._id)}
+                >
+                  {deletingUserId === user._id ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </li>
+          ))}
+          {!users.length && <li className="empty-state">No registered users found.</li>}
         </ul>
       </div>
     </section>

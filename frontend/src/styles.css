@@ -335,6 +335,26 @@ button:disabled {
   justify-content: flex-end;
 }
 
+.danger-zone {
+  border-color: #fecaca;
+  background: rgba(254, 242, 242, 0.7);
+}
+
+.danger-zone h3 {
+  color: #b42318;
+}
+
+.delete-account-btn {
+  width: auto;
+  min-height: 38px;
+  padding: 8px 16px;
+}
+
+.delete-confirm {
+  display: grid;
+  gap: 12px;
+}
+
 .lab-summary-card {
   align-items: center;
 }

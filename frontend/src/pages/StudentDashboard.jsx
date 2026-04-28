@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import { useNavigate } from 'react-router-dom';
+import { apiClient, setAuthToken } from '../api/client';
 
 function StudentDashboard() {
   const [slots, setSlots] = useState([]);
@@ -8,6 +9,9 @@ function StudentDashboard() {
   const [message, setMessage] = useState('');
   const [isBooking, setIsBooking] = useState(false);
   const [activeCancelId, setActiveCancelId] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const navigate = useNavigate();
 
   async function fetchSlots() {
     const response = await apiClient.get('/booking/slots');
@@ -58,6 +62,24 @@ function StudentDashboard() {
       setError(requestError.response?.data?.message || 'Unable to cancel booking');
     } finally {
       setActiveCancelId('');
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeletingAccount(true);
+    setError('');
+    try {
+      const meResponse = await apiClient.get('/auth/me');
+      const userId = meResponse.data?.data?._id;
+      await apiClient.delete(`/auth/users/${userId}`);
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('role');
+      setAuthToken(null);
+      navigate('/');
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to delete account');
+      setIsDeletingAccount(false);
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -185,6 +207,33 @@ function StudentDashboard() {
           {!bookings.length && <li className="empty-state">No bookings yet.</li>}
         </ul>
       </div>
+      </div>
+
+      <div className="card danger-zone">
+        <h3>Account</h3>
+        <p className="muted-text">Permanently delete your account. This cannot be undone.</p>
+        {!showDeleteConfirm ? (
+          <button type="button" className="danger-button delete-account-btn" onClick={() => setShowDeleteConfirm(true)}>
+            Delete My Account
+          </button>
+        ) : (
+          <div className="delete-confirm">
+            <p className="alert alert-error">Are you sure? All your bookings will remain in the system but your account will be gone.</p>
+            <div className="inline-actions">
+              <button
+                type="button"
+                className="danger-button"
+                disabled={isDeletingAccount}
+                onClick={handleDeleteAccount}
+              >
+                {isDeletingAccount ? 'Deleting...' : 'Yes, Delete Account'}
+              </button>
+              <button type="button" className="secondary-button" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
