@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiClient, setAuthToken } from '../api/client';
 
 function LoginPage() {
@@ -69,7 +69,7 @@ function LoginPage() {
 
       <form onSubmit={handleLogin} className="card form auth-card">
         <h3>Welcome back</h3>
-        <p className="muted-text">Choose your account type and continue with the demo credentials or your own account. <a href="/register">Create a new account</a></p>
+        <p className="muted-text">Choose your account type and continue with the demo credentials or your own account. <Link to="/register">Create a new account</Link></p>
         <label>
           Login as
           <select value={accountType} onChange={(event) => setAccountType(event.target.value)}>
@@ -88,7 +88,7 @@ function LoginPage() {
         <button type="submit">Login</button>
         {message && <p className="alert alert-error">{message}</p>}
         <p className="muted-text text-center" style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
-          Don't have an account? <a href="/register">Register here</a>
+          Don't have an account? <Link to="/register">Register here</Link>
         </p>
       </form>
     </section>

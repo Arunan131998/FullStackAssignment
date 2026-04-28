@@ -33,12 +33,16 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear invalid session and redirect
+    const status = error.response?.status;
+    const requestUrl = error.config?.url || '';
+    const isAuthRoute = requestUrl.startsWith('/auth/');
+    const hadSession = !!sessionStorage.getItem('token');
+
+    if (status === 401 && hadSession && !isAuthRoute) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('role');
       setAuthToken(null);
-      window.location.href = '/';
+      window.location.assign('/');
     }
     return Promise.reject(error);
   }
