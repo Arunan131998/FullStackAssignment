@@ -52,7 +52,40 @@ router.get('/slots', async (request, response) => {
   const slots = await Slot.find(filters)
     .populate('labId', 'name location')
     .sort({ date: 1, startTime: 1 });
-  response.json({ data: slots });
+
+  const slotIds = slots.map((slot) => slot._id);
+  const approvedCounts = await Booking.aggregate([
+    {
+      $match: {
+        slotId: { $in: slotIds },
+        status: 'APPROVED',
+      },
+    },
+    {
+      $group: {
+        _id: '$slotId',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const approvedCountMap = new Map(
+    approvedCounts.map((entry) => [String(entry._id), entry.count])
+  );
+
+  const slotsWithAvailability = slots.map((slot) => {
+    const approvedCount = approvedCountMap.get(String(slot._id)) || 0;
+    const remainingCapacity = Math.max(slot.capacity - approvedCount, 0);
+
+    return {
+      ...slot.toObject(),
+      approvedCount,
+      remainingCapacity,
+      isAvailable: remainingCapacity > 0,
+    };
+  });
+
+  response.json({ data: slotsWithAvailability });
 });
 
 router.post('/slots', requireAuth, requireAdmin, async (request, response) => {

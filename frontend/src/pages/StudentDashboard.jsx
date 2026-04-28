@@ -70,6 +70,29 @@ function StudentDashboard() {
     return `${slot.date} | ${slot.startTime} - ${slot.endTime}${labName}`;
   }
 
+  const slotsByLab = slots.reduce((groups, slot) => {
+    const labId = slot.labId?._id || 'unknown-lab';
+    const existingGroup = groups[labId] || {
+      labName: slot.labId?.name || 'Unassigned lab',
+      location: slot.labId?.location || '',
+      totalSlots: 0,
+      openSlots: 0,
+      totalRemainingSeats: 0,
+      slots: [],
+    };
+
+    existingGroup.totalSlots += 1;
+    existingGroup.totalRemainingSeats += slot.remainingCapacity || 0;
+    if (slot.isAvailable) {
+      existingGroup.openSlots += 1;
+    }
+    existingGroup.slots.push(slot);
+    groups[labId] = existingGroup;
+    return groups;
+  }, {});
+
+  const labGroups = Object.values(slotsByLab);
+
   return (
     <section>
       <div className="section-heading">
@@ -81,24 +104,59 @@ function StudentDashboard() {
       </div>
       {error && <p className="alert alert-error">{error}</p>}
       {message && <p className="alert alert-success">{message}</p>}
+      <div className="card">
+        <h3>Availability by Lab</h3>
+        <ul className="clean-list">
+          {labGroups.map((lab) => (
+            <li key={lab.labName} className="list-item-card lab-summary-card">
+              <div>
+                <strong>{lab.labName}</strong>
+                {lab.location && <div className="muted-text">{lab.location}</div>}
+              </div>
+              <div className="summary-badges">
+                <span className="status-badge neutral-badge">Open slots: {lab.openSlots}/{lab.totalSlots}</span>
+                <span className="status-badge status-approved">Seats left: {lab.totalRemainingSeats}</span>
+              </div>
+            </li>
+          ))}
+          {!labGroups.length && <li className="empty-state">No lab availability yet.</li>}
+        </ul>
+      </div>
       <div className="dashboard-grid two-column-grid">
       <div className="card">
         <h3>Available Slots</h3>
-        <ul className="clean-list">
-          {slots.map((slot) => (
-            <li key={slot._id} className="slot-row list-item-card">
-              <div>
-                <strong>{slot.labId?.name || 'Lab slot'}</strong>
-                <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
-                <div className="muted-text">Capacity: {slot.capacity}</div>
+        <div className="lab-slot-groups">
+          {labGroups.map((lab) => (
+            <div key={lab.labName} className="lab-slot-group">
+              <div className="lab-slot-header">
+                <div>
+                  <strong>{lab.labName}</strong>
+                  {lab.location && <div className="muted-text">{lab.location}</div>}
+                </div>
+                <span className="status-badge neutral-badge">Available slots: {lab.openSlots}</span>
               </div>
-              <button type="button" onClick={() => handleBookSlot(slot._id)} disabled={isBooking}>
-                {isBooking ? 'Booking...' : 'Book Slot'}
-              </button>
-            </li>
+              <ul className="clean-list">
+                {lab.slots.map((slot) => (
+                  <li key={slot._id} className="slot-row list-item-card">
+                    <div>
+                      <strong>{slot.date} | {slot.startTime} - {slot.endTime}</strong>
+                      <div className="muted-text">Capacity: {slot.capacity} | Approved: {slot.approvedCount || 0}</div>
+                      <div className="muted-text">Remaining seats: {slot.remainingCapacity || 0}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleBookSlot(slot._id)}
+                      disabled={isBooking || !slot.isAvailable}
+                    >
+                      {slot.isAvailable ? (isBooking ? 'Booking...' : 'Book Slot') : 'Full'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-          {!slots.length && <li className="empty-state">No slots available yet.</li>}
-        </ul>
+          {!labGroups.length && <p className="empty-state">No slots available yet.</p>}
+        </div>
       </div>
       <div className="card">
         <h3>My Bookings</h3>

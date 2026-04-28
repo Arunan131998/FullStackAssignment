@@ -132,6 +132,20 @@ function AdminDashboard() {
     return `${slot.date} | ${slot.startTime} - ${slot.endTime}${labName}`;
   }
 
+  const availabilityByLab = labs.map((lab) => {
+    const labSlots = slots.filter((slot) => {
+      const slotLabId = typeof slot.labId === 'string' ? slot.labId : slot.labId?._id;
+      return slotLabId === lab._id;
+    });
+
+    return {
+      ...lab,
+      totalSlots: labSlots.length,
+      openSlots: labSlots.filter((slot) => slot.isAvailable).length,
+      totalRemainingSeats: labSlots.reduce((sum, slot) => sum + (slot.remainingCapacity || 0), 0),
+    };
+  });
+
   return (
     <section>
       <div className="section-heading">
@@ -143,6 +157,24 @@ function AdminDashboard() {
       </div>
       {error && <p className="alert alert-error">{error}</p>}
       {message && <p className="alert alert-success">{message}</p>}
+      <div className="card">
+        <h3>Slot Availability by Lab</h3>
+        <ul className="clean-list">
+          {availabilityByLab.map((lab) => (
+            <li key={lab._id} className="list-item-card lab-summary-card">
+              <div>
+                <strong>{lab.name}</strong>
+                <div className="muted-text">{lab.location}</div>
+              </div>
+              <div className="summary-badges">
+                <span className="status-badge neutral-badge">Open slots: {lab.openSlots}/{lab.totalSlots}</span>
+                <span className="status-badge status-approved">Seats left: {lab.totalRemainingSeats}</span>
+              </div>
+            </li>
+          ))}
+          {!availabilityByLab.length && <li className="empty-state">No labs created yet.</li>}
+        </ul>
+      </div>
       <div className="dashboard-grid">
         <form className="card form" onSubmit={handleCreateLab}>
           <h3>Create Lab</h3>
@@ -218,7 +250,10 @@ function AdminDashboard() {
                 <strong>{lab.name}</strong>
                 <div className="muted-text">{lab.location}</div>
               </div>
-              <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
+              <div className="summary-badges">
+                <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
+                <span className="status-badge neutral-badge">Slots: {availabilityByLab.find((entry) => entry._id === lab._id)?.totalSlots || 0}</span>
+              </div>
             </li>
           ))}
           {!labs.length && <li className="empty-state">No labs created yet.</li>}
@@ -234,7 +269,12 @@ function AdminDashboard() {
                 <strong>{slot.labId?.name || 'Lab slot'}</strong>
                 <div className="muted-text">{slot.date} | {slot.startTime} - {slot.endTime}</div>
               </div>
-              <span className="status-badge neutral-badge">Capacity: {slot.capacity}</span>
+              <div className="summary-badges">
+                <span className="status-badge neutral-badge">Capacity: {slot.capacity}</span>
+                <span className={`status-badge ${slot.isAvailable ? 'status-approved' : 'status-cancelled'}`}>
+                  Remaining: {slot.remainingCapacity || 0}
+                </span>
+              </div>
             </li>
           ))}
           {!slots.length && <li className="empty-state">No slots created yet.</li>}
