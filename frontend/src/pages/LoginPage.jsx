@@ -69,7 +69,7 @@ function LoginPage() {
 
       <form onSubmit={handleLogin} className="card form auth-card">
         <h3>Welcome back</h3>
-        <p className="muted-text">Choose your account type and continue with the demo credentials or your own account.</p>
+        <p className="muted-text">Choose your account type and continue with the demo credentials or your own account. <a href="/register">Create a new account</a></p>
         <label>
           Login as
           <select value={accountType} onChange={(event) => setAccountType(event.target.value)}>
@@ -87,6 +87,9 @@ function LoginPage() {
         </label>
         <button type="submit">Login</button>
         {message && <p className="alert alert-error">{message}</p>}
+        <p className="muted-text text-center" style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+          Don't have an account? <a href="/register">Register here</a>
+        </p>
       </form>
     </section>
   );

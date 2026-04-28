@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
+import RegistrationPage from './pages/RegistrationPage';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import { setAuthToken } from './api/client';
@@ -57,6 +58,7 @@ function App() {
                 : <LoginPage />
             }
           />
+          <Route path="/register" element={<RegistrationPage />} />
           <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         </Routes>
