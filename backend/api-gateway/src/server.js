@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
+const YAML = require('yamljs');
+const swaggerUi = require('swagger-ui-express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 require('dotenv').config();
 
@@ -18,6 +21,11 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(morgan('dev'));
 
+const swaggerDocument = YAML.load(path.join(__dirname, '../../../docs/openapi.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customSiteTitle: 'Lab Slot Booking API',
+}));
+
 app.get('/health', (request, response) => {
   response.json({ success: true, service: 'api-gateway' });
 });
@@ -27,4 +35,5 @@ app.use('/booking', createProxyMiddleware({ target: bookingServiceUrl, changeOri
 
 app.listen(port, () => {
   console.log(`API Gateway running on port ${port}`);
+  console.log(`Swagger docs: http://localhost:${port}/api-docs`);
 });
