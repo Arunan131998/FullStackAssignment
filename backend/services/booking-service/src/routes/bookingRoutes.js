@@ -118,7 +118,9 @@ router.get('/bookings/me', requireAuth, async (request, response) => {
 router.get('/bookings', requireAuth, requireAdmin, async (request, response) => {
   const query = {};
   if (request.query.status) query.status = request.query.status;
-  const bookings = await Booking.find(query).sort({ createdAt: -1 });
+  const bookings = await Booking.find(query)
+    .populate({ path: 'slotId', populate: { path: 'labId', select: 'name location' } })
+    .sort({ createdAt: -1 });
   response.json({ data: bookings });
 });
 

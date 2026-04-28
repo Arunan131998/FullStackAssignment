@@ -4,6 +4,7 @@ import { apiClient } from '../api/client';
 function AdminDashboard() {
   const [labs, setLabs] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [pendingBookings, setPendingBookings] = useState([]);
   const [name, setName] = useState('Computer Networks Lab');
   const [location, setLocation] = useState('Block A, Floor 2');
   const [totalSeats, setTotalSeats] = useState(30);
@@ -14,6 +15,7 @@ function AdminDashboard() {
   const [capacity, setCapacity] = useState(10);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [activeBookingId, setActiveBookingId] = useState('');
 
   async function fetchLabs() {
     const response = await apiClient.get('/booking/labs');
@@ -27,11 +29,16 @@ function AdminDashboard() {
     setSlots(response.data?.data || []);
   }
 
+  async function fetchPendingBookings() {
+    const response = await apiClient.get('/booking/bookings', { params: { status: 'PENDING' } });
+    setPendingBookings(response.data?.data || []);
+  }
+
   useEffect(() => {
     async function loadDashboardData() {
       setError('');
       try {
-        await Promise.all([fetchLabs(), fetchSlots()]);
+        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings()]);
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
@@ -73,6 +80,30 @@ function AdminDashboard() {
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Failed to create slot');
     }
+  }
+
+  async function handleBookingDecision(bookingId, decision) {
+    setError('');
+    setMessage('');
+    setActiveBookingId(bookingId);
+    try {
+      await apiClient.patch(`/booking/bookings/${bookingId}/${decision}`);
+      setMessage(`Booking ${decision}d successfully`);
+      await fetchPendingBookings();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || `Failed to ${decision} booking`);
+    } finally {
+      setActiveBookingId('');
+    }
+  }
+
+  function renderPendingBookingSlot(booking) {
+    const slot = booking.slotId;
+    if (!slot || typeof slot === 'string') {
+      return 'Slot details unavailable';
+    }
+    const labName = slot.labId?.name ? ` | ${slot.labId.name}` : '';
+    return `${slot.date} | ${slot.startTime} - ${slot.endTime}${labName}`;
   }
 
   return (
@@ -179,6 +210,39 @@ function AdminDashboard() {
             </li>
           ))}
           {!slots.length && <li className="empty-state">No slots created yet.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Pending Booking Requests</h3>
+        <ul className="clean-list">
+          {pendingBookings.map((booking) => (
+            <li key={booking._id} className="list-item-card">
+              <div>
+                <strong>{renderPendingBookingSlot(booking)}</strong>
+                <div className="muted-text">Student ID: {booking.studentId}</div>
+                {booking.purpose && <div className="muted-text">Purpose: {booking.purpose}</div>}
+              </div>
+              <div className="inline-actions">
+                <button
+                  type="button"
+                  disabled={activeBookingId === booking._id}
+                  onClick={() => handleBookingDecision(booking._id, 'approve')}
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={activeBookingId === booking._id}
+                  onClick={() => handleBookingDecision(booking._id, 'reject')}
+                >
+                  Reject
+                </button>
+              </div>
+            </li>
+          ))}
+          {!pendingBookings.length && <li className="empty-state">No pending booking requests.</li>}
         </ul>
       </div>
     </section>

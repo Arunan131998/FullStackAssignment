@@ -165,6 +165,10 @@ button:disabled {
   box-shadow: none;
 }
 
+.danger-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
 .slot-row {
   display: flex;
   justify-content: space-between;
@@ -302,6 +306,18 @@ button:disabled {
   text-align: center;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.7);
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inline-actions button {
+  width: auto;
+  min-height: 38px;
+  padding: 8px 12px;
 }
 
 @media (max-width: 820px) {

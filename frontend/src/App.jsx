@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import StudentDashboard from './pages/StudentDashboard';
@@ -5,8 +6,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import { setAuthToken } from './api/client';
 
 function ProtectedRoute({ children, role }) {
-  const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('role');
+  const token = sessionStorage.getItem('token');
+  const userRole = sessionStorage.getItem('role');
   if (!token) return <Navigate to="/" replace />;
   if (role && userRole !== role) return <Navigate to="/" replace />;
   return children;
@@ -14,12 +15,19 @@ function ProtectedRoute({ children, role }) {
 
 function App() {
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem('token');
-  const userRole = localStorage.getItem('role');
+  const isLoggedIn = !!sessionStorage.getItem('token');
+  const userRole = sessionStorage.getItem('role');
 
-  function handleLogout() {
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    setAuthToken(token);
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+  }, []);
+
+  function handleLogout() {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('role');
     setAuthToken(null);
     navigate('/');
   }

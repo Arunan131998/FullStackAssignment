@@ -31,15 +31,15 @@ function LoginPage() {
 
       if (role !== accountType) {
         setAuthToken(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('role');
         setMessage(`No ${accountTypeLabel} account found with those credentials`);
         return;
       }
 
       if (token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('role', role);
         setAuthToken(token);
       }
       if (role === 'admin') {
