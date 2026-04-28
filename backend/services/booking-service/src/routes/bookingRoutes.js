@@ -6,6 +6,10 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
+function hasInvalidTimeRange(startTime, endTime) {
+  return startTime >= endTime;
+}
+
 router.get('/labs', async (request, response) => {
   try {
     const labs = await Lab.find().sort({ createdAt: -1 });
@@ -48,6 +52,23 @@ router.post('/slots', requireAuth, requireAdmin, async (request, response) => {
   if (!labId || !date || !startTime || !endTime || !capacity) {
     return response.status(400).json({ message: 'labId, date, startTime, endTime, capacity are required' });
   }
+
+  if (hasInvalidTimeRange(startTime, endTime)) {
+    return response.status(400).json({ message: 'endTime must be later than startTime' });
+  }
+
+  const conflictingSlot = await Slot.findOne({
+    labId,
+    date,
+    isActive: true,
+    startTime: { $lt: endTime },
+    endTime: { $gt: startTime },
+  });
+
+  if (conflictingSlot) {
+    return response.status(409).json({ message: 'A slot already exists for this lab during that time' });
+  }
+
   const slot = await Slot.create({ labId, date, startTime, endTime, capacity });
   return response.status(201).json({ data: slot });
 });

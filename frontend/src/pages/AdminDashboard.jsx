@@ -3,6 +3,7 @@ import { apiClient } from '../api/client';
 
 function AdminDashboard() {
   const [labs, setLabs] = useState([]);
+  const [slots, setSlots] = useState([]);
   const [name, setName] = useState('Computer Networks Lab');
   const [location, setLocation] = useState('Block A, Floor 2');
   const [totalSeats, setTotalSeats] = useState(30);
@@ -21,16 +22,21 @@ function AdminDashboard() {
     setSelectedLabId((current) => current || labList[0]?._id || '');
   }
 
+  async function fetchSlots() {
+    const response = await apiClient.get('/booking/slots');
+    setSlots(response.data?.data || []);
+  }
+
   useEffect(() => {
-    async function loadLabs() {
+    async function loadDashboardData() {
       setError('');
       try {
-        await fetchLabs();
+        await Promise.all([fetchLabs(), fetchSlots()]);
       } catch (requestError) {
-        setError(requestError.response?.data?.message || 'Failed to load labs');
+        setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
     }
-    loadLabs();
+    loadDashboardData();
   }, []);
 
   async function handleCreateLab(event) {
@@ -63,6 +69,7 @@ function AdminDashboard() {
       setStartTime('09:00');
       setEndTime('10:00');
       setCapacity(10);
+      await fetchSlots();
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Failed to create slot');
     }
@@ -146,6 +153,19 @@ function AdminDashboard() {
             </li>
           ))}
           {!labs.length && <li>No labs created yet.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Existing Slots</h3>
+        <ul>
+          {slots.map((slot) => (
+            <li key={slot._id}>
+              {slot.labId?.name ? `${slot.labId.name} | ` : ''}
+              {slot.date} | {slot.startTime} - {slot.endTime} | Capacity: {slot.capacity}
+            </li>
+          ))}
+          {!slots.length && <li>No slots created yet.</li>}
         </ul>
       </div>
     </section>
