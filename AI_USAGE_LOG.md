@@ -5,7 +5,8 @@
 - Assignment: Web Application Development
 - Submission Due Date: 4 May 2026
 - Student Name: Arunan Sundaramoorthy
-- Student ID: _(add your BITS ID)_
+- Student ID: 2025TM93064
+- Email: 2025tm93064@wilp.bits-pilani.ac.in
 - AI Tools Used: GitHub Copilot (VS Code, powered by Claude Sonnet 4.6)
 
 ## Purpose of This Log
