@@ -13,3 +13,18 @@ export function setAuthToken(token) {
   }
   delete apiClient.defaults.headers.common.Authorization;
 }
+
+// Add response interceptor to handle 401 errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear invalid session and redirect
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('role');
+      setAuthToken(null);
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
