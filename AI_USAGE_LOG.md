@@ -4,9 +4,9 @@
 - Course: SE ZG503 Full Stack Application Development
 - Assignment: Web Application Development
 - Submission Due Date: 4 May 2026
-- Student Name: _Add your name_
-- Student ID: _Add your ID_
-- AI Tool Used: GitHub Copilot (GPT-5.3-Codex)
+- Student Name: Arunan Sundaramoorthy
+- Student ID: _(add your BITS ID)_
+- AI Tools Used: GitHub Copilot (VS Code, powered by Claude Sonnet 4.6)
 
 ## Purpose of This Log
 This file tracks AI-assisted interactions used during development, debugging, planning, and documentation.
@@ -45,6 +45,9 @@ This file tracks AI-assisted interactions used during development, debugging, pl
 | 24 | 2026-04-28 | "Update Postman collection with all endpoints." | Rebuilt collection with 5 folders (Health/Auth/Labs/Slots/Bookings/Users), 20 requests, proper v2.1 URL objects, `_postman_id`, token/ID auto-capture test scripts. Fixed import error by removing invalid top-level export metadata fields. | After two rounds of debugging the VS Code Postman extension schema errors, adopted final clean version. | `docs/postman/LabSlotBooking_Demo.postman_collection.json`, `scripts/generate-postman-collection.js` | Learned that the Postman collection v2.1 schema requires URL fields to be objects (not strings) and that extra top-level fields cause silent import failures. |
 | 25 | 2026-04-28 | "Create a Swagger API documentation." | Created `docs/openapi.yaml` (OpenAPI 3.0.3) with 15 paths, full request/response schemas, bearer auth security scheme, enum values, and error codes; installed `swagger-ui-express` + `yamljs` in api-gateway; Swagger UI served at `http://localhost:4000/api-docs`. | Adopted as-is; validated YAML parses correctly with 15 paths; committed and pushed. | `docs/openapi.yaml`, `backend/api-gateway/src/server.js`, `backend/api-gateway/package.json` | Learned how to serve an OpenAPI spec through the same gateway that proxies the actual APIs, making documentation co-located with the entry point. |
 | 26 | 2026-04-28 | "Update the docs with what was done." | Updated `API_OVERVIEW.md` with new endpoints (PATCH/DELETE labs, PATCH/DELETE slots, GET/DELETE users, availability metadata table); updated `ARCHITECTURE.md` with Swagger UI routing, full feature descriptions for each service, updated validation layer and booking workflow sections. | Adopted documentation updates; committed and pushed. | `docs/API_OVERVIEW.md`, `docs/ARCHITECTURE.md`, `AI_USAGE_LOG.md` | Learned to keep architecture docs current incrementally rather than doing a single large update at the end — parallel service and doc changes reduce final submission doc debt. |
+| 27 | 2026-04-28 | "Can you update the README." | Rewrote `README.md` from scratch: removed stale placeholder wording ("scaffold", "future: edit/delete"), replaced bullet-list setup steps with proper bash fenced code blocks, added Prerequisites section, corrected environment setup to reference `.env.example`, listed every root `npm run` script with descriptions, removed reference to non-existent Postman environment file. | Adopted fully; committed and pushed (`docs: update README`). | `README.md` | Learned how README drift accumulates when features are added without updating docs — a quick AI-assisted audit catches mismatches faster than manual review. |
+| 28 | 2026-04-28 | Shared full assignment brief PDF; asked what other features could be added and how to maximise rubric marks. | Identified rubric gaps: search/filter, pagination, analytics panel, waitlist, notification layer, stronger validation. Ranked features by effort vs. marks; highlighted Backend (5), Frontend (5), Integration (3), Problem statement (2), AI log + quality (5) as key areas. | Used the priority list to decide on COMPLETED status flow as the next immediate implementation — clear business value, low effort, strong demonstration of end-to-end workflow. | Planning/strategy | Learned how to map feature ideas to rubric criteria and select implementation order based on marks/effort ratio. |
+| 29 | 2026-04-28 | "Right now the status flow is only till approved for slots and not till completed." | Designed and implemented full COMPLETED terminal state: new `PATCH /bookings/:id/complete` backend route (admin-only, APPROVED→COMPLETED guard, 409 on wrong state transitions); `completedBookings` state + `fetchCompletedBookings()` in AdminDashboard; "Mark Complete" button on approved rows; dedicated Completed Bookings section; student Booking History filter extended to include COMPLETED. Confirmed `status-completed` CSS class already existed. | Adopted all changes; committed and pushed (`feat: add COMPLETED status flow for bookings`, 3 files, 68 insertions). | `backend/services/booking-service/src/routes/bookingRoutes.js`, `frontend/src/pages/AdminDashboard.jsx`, `frontend/src/pages/StudentDashboard.jsx` | Learned how to extend a state machine safely: define all invalid transitions explicitly (409 errors) before adding the new transition, so no intermediate state can be silently skipped. |
 
 ---
 
@@ -59,36 +62,85 @@ Use one row per meaningful AI interaction:
 
 ---
 
-## Manual vs AI Work Split (Fill Before Submission)
+## Manual vs AI Work Split
 
 ### AI-assisted parts
-- _Example: initial boilerplate for React components_
-- _Example: API endpoint draft and validation suggestions_
-- _Example: test case generation and documentation skeleton_
+- Initial monorepo scaffold (directory structure, `package.json` files, entry-point `server.js` skeletons)
+- Express route boilerplate for all CRUD endpoints across auth and booking services
+- Mongoose schema definitions for User, Lab, Slot, and Booking models
+- React component scaffolding: `LoginPage`, `RegistrationPage`, `StudentDashboard`, `AdminDashboard` layout and state structure
+- JWT middleware (`requireAuth`, `requireAdmin`) template
+- Vite + React Router setup and `App.jsx` route configuration
+- Postman collection v2.1 JSON generation including auto-capture test scripts
+- OpenAPI 3.0 spec (`docs/openapi.yaml`) with 15 paths, schemas, and security definitions
+- All three documentation files (`API_OVERVIEW.md`, `ARCHITECTURE.md`, `DB_SCHEMA.md`) — initial drafts and subsequent updates
+- CSS layout and status badge styles
+- Axios interceptor pattern for token attachment and 401 auto-redirect
+- README rewrite and AI usage log structure
 
-### Manually implemented/refined parts
-- _Example: final business logic and edge-case handling_
-- _Example: schema adjustments and bug fixes after testing_
-- _Example: UI behavior tuning and integration fixes_
+### Manually implemented / reviewed / refined parts
+- Verified each API route manually by running services with `npm run dev` and testing via Postman
+- Debugged and corrected Postman collection v2.1 schema (URL strings vs. objects causing silent import failure) — identified by reading extension error output, not AI
+- Confirmed overlap validation logic (student double-booking prevention) covered edge cases like same-lab same-time on different days
+- Manually tested auth flow: register → login → refresh → 401 recovery → role mismatch error
+- Decided booking status state machine transitions (which states lead to which) and reviewed each guard for correctness
+- Verified `status-completed` CSS class was already present before requesting the COMPLETED feature — avoiding a duplicate style being added
+- Reviewed and edited all generated documentation to remove inconsistencies with actual implemented routes
+- All git commit messages written and curated by student
+- This reflection section written in student's own words
 
 ---
 
-## Reflection Notes (Draft Pointers)
-Answer in your own words before final submission:
+## Reflection Report
 
-1. Which AI tools did you use and for what tasks?
-2. Where did AI speed up development?
-3. Where was AI output incorrect/incomplete?
-4. What bugs emerged from AI-generated code and how did you debug them?
-5. Did AI improve your understanding or create blind spots?
+### 1. Which AI tools were used and how?
+
+I used **GitHub Copilot** (integrated in VS Code, powered by Claude Sonnet 4.6) throughout the entire assignment. I interacted with it in a conversational way — asking it to scaffold the project, suggest feature designs, generate backend routes, write React components, produce documentation, and review the rubric to prioritise my work.
+
+I used it in three main modes:
+- **Generation** — asking for new code (routes, components, schemas, docs)
+- **Review** — asking "what am I missing" against rubric criteria or spec requirements
+- **Debugging** — describing an error and asking for the root cause (e.g., refresh losing auth state, Postman import failing)
+
+### 2. Where did AI speed up development?
+
+The biggest time saving was in **boilerplate elimination**. Setting up a monorepo with three Node.js services, a React Vite frontend, an API gateway with Swagger, an auth middleware layer, and Mongoose schemas would have taken a full day manually. With AI assistance, a working scaffold was ready in under an hour.
+
+Documentation was also significantly faster. Writing `API_OVERVIEW.md`, `ARCHITECTURE.md`, and the OpenAPI YAML spec manually for 15 endpoints with full request/response examples would have taken hours. The AI generated complete, consistent drafts I could review and ship quickly.
+
+### 3. Where was AI output incorrect or incomplete?
+
+- **Postman collection schema**: The first generated collection used plain URL strings. The Postman VS Code extension requires URL fields to be objects (`{ raw: "...", host: [...], path: [...] }`). The AI did not anticipate this constraint — I had to diagnose the silent import failure myself, report back, and request a fix.
+- **Environment file handling**: Early in the project the README said `.env` files were "already scaffolded" but in reality only `.env.example` existed. The AI had described the desired state rather than the actual state — I had to flag this and get the README corrected.
+- **Overconfident route generation**: Some early generated routes did not include all edge-case guards (e.g., capacity vs. lab seats check was missing from the initial slot creation route). I discovered this through manual testing and had to request the guard be added.
+
+### 4. What issues came up integrating AI output and how were they debugged?
+
+**Session persistence on refresh**: The AI's initial frontend scaffold stored the JWT in `sessionStorage` but did not restore it before the axios client was initialised. After login, a browser refresh caused 401 errors on every API call. I identified the issue by checking the `Authorization` header in the browser network tab — it was empty on page load. I described this to the AI and it correctly diagnosed missing interceptor initialisation at module load time.
+
+**Postman collection import failure**: The VS Code Postman extension silently refused to import the collection. The AI's first fix attempt modified the wrong field. I read the extension's error output carefully, identified it expected URL objects, and asked for a targeted fix specifying the exact field format required.
+
+**COMPLETED status extension**: When asking for the COMPLETED status feature, I first checked that `status-completed` CSS was already in `styles.css` before requesting the frontend changes. The AI correctly identified it existed and did not add a duplicate rule — but I would not have caught a duplicate without that manual check first.
+
+### 5. Did AI help or hinder understanding?
+
+Overall, AI **helped** my understanding in areas I was less familiar with — specifically:
+- MongoDB aggregation (`$group`, `$match`) for capacity calculations
+- OpenAPI 3.0 spec structure and serving it through an Express gateway
+- React sessionStorage + interceptor architecture for persistent auth
+
+It **created a blind spot risk** in validation logic. Because the AI generated route handlers quickly, I could have accepted them without reading the guards carefully. I mitigated this by manually testing each feature after it was generated rather than trusting the generated code was correct.
+
+The strongest learning outcome was understanding how to **work with AI as a reviewer and generator** rather than a replacement for thinking. The architecture decisions — microservices, status machine design, referential integrity guards — were mine. The AI translated those decisions into code faster than I could type.
 
 ---
 
-## Evidence Checklist (Before LMS Submission)
-- [ ] GitHub repo is public and complete
-- [ ] API documentation included (Swagger/Postman/Markdown)
-- [ ] DB schema/model diagram included
-- [ ] Architecture + component hierarchy documented
-- [ ] Demo video uploaded to Google Drive with public/access permissions for evaluators
-- [ ] Reflection report (1–2 pages) written manually
-- [ ] AI usage log updated with real prompts and outcomes
+## Evidence Checklist
+- [x] GitHub repo is public and complete
+- [x] API documentation included (Swagger UI at `/api-docs`, Postman collection, `docs/API_OVERVIEW.md`)
+- [x] DB schema/model diagram included (`docs/DB_SCHEMA.md`)
+- [x] Architecture + component hierarchy documented (`docs/ARCHITECTURE.md`)
+- [x] AI usage log updated with real prompts and outcomes (this file)
+- [ ] Demo video recorded and uploaded to Google Drive (accessible to BITS emails)
+- [ ] Google Drive video link added to LMS submission
+- [ ] Reflection report submitted (content above — export to PDF or paste into LMS)
