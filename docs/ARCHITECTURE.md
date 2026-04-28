@@ -9,11 +9,12 @@ Lab Slot Booking System uses a microservice architecture with an API Gateway pat
 ### Frontend (React + Vite)
 - **Location:** `frontend/`
 - **Entry Points:**
-  - Login Page: Role selector with account-type dropdown
-  - Student Dashboard: Browse available slots, manage bookings
-  - Admin Dashboard: Create labs/slots, approve/reject pending bookings
-- **Authentication:** JWT tokens stored in sessionStorage (session-only, clears on browser close)
-- **Key Libraries:** React Router, Axios for API calls
+  - Registration Page: Name/email/role/password with validation and auto-login
+  - Login Page: Role selector with account-type validation
+  - Student Dashboard: Browse slots grouped by lab, book slots, view active and history bookings, self-delete account
+  - Admin Dashboard: Full lab/slot CRUD (create, inline edit, delete), booking approval workflow, all booking history, user management
+- **Authentication:** JWT in sessionStorage + axios request interceptor (attaches token on every request) + 401 response interceptor (auto-redirect to login) + `authReady` gate prevents rendering before token is restored
+- **Key Libraries:** React Router, Axios
 - **Port:** 5173
 
 ### API Gateway
@@ -22,29 +23,35 @@ Lab Slot Booking System uses a microservice architecture with an API Gateway pat
 - **Routing:**
   - `/auth/*` → Auth Service (port 4001)
   - `/booking/*` → Booking Service (port 4002)
+  - `/api-docs` → Swagger UI (served directly from gateway)
 - **Port:** 4000
 
 ### Auth Service
 - **Location:** `backend/services/auth-service/`
-- **Responsibility:** User registration, login, JWT generation, profile retrieval
+- **Responsibility:** User registration, login, JWT generation, profile retrieval, user management
 - **Key Features:**
   - Password hashing (bcrypt)
   - JWT token generation and validation
   - User role validation (student/admin)
+  - Admin: list all users, delete any user (last-admin guard)
+  - Self-delete: authenticated user can delete own account
 - **Port:** 4001
-- **Endpoints:** `/auth/register`, `/auth/login`, `/auth/me`
+- **Endpoints:** `/auth/register`, `/auth/login`, `/auth/me`, `/auth/users`, `/auth/users/:id`
 
 ### Booking Service
 - **Location:** `backend/services/booking-service/`
-- **Responsibility:** Lab management, slot creation, booking operations
+- **Responsibility:** Full Lab/Slot/Booking lifecycle management
 - **Key Features:**
-  - Lab CRUD operations
-  - Slot creation with validation (no past slots, no overlaps)
-  - Booking creation with comprehensive validation
+  - Lab CRUD (create, list, edit, delete — delete blocked if active slots exist)
+  - Slot CRUD (create, list, edit, delete — delete blocked if active bookings exist)
+  - Slot capacity ≤ lab totalSeats enforced at create and update
+  - Slot availability metadata (`approvedCount`, `remainingCapacity`, `isAvailable`) on every GET
+  - Booking creation with comprehensive validation (past, duplicate, overlap, full)
   - Booking approval/rejection/cancellation workflow
-  - Capacity tracking (approved booking count vs. slot capacity)
+  - Admin: all bookings history across all statuses
+  - Student: own booking history split by active vs past
 - **Port:** 4002
-- **Endpoints:** `/booking/labs`, `/booking/slots`, `/booking/bookings`
+- **Endpoints:** `/booking/labs`, `/booking/labs/:id`, `/booking/slots`, `/booking/slots/:id`, `/booking/bookings`, `/booking/bookings/me`, `/booking/bookings/:id/approve|reject|cancel`
 
 ### Database (MongoDB)
 - **Collections:** User, Lab, Slot, Booking
@@ -115,26 +122,36 @@ Lab Slot Booking System uses a microservice architecture with an API Gateway pat
 
 ### Admin Perspective
 1. Admin logs in → Admin Dashboard
-2. Creates labs (POST `/booking/labs`)
-3. Creates slots for labs (POST `/booking/slots`)
+2. Creates labs (POST `/booking/labs`) — can also inline-edit or delete labs
+3. Creates slots for labs (POST `/booking/slots`) — can also inline-edit or delete slots
 4. Views "Pending Booking Requests" queue
 5. Approves (PATCH `.../approve`) or rejects (PATCH `.../reject`) each booking
-6. Views "Approved Bookings" queue
-7. Can cancel any approved booking if needed (PATCH `.../cancel`)
+6. Views "Approved Bookings" queue; can cancel any approved booking
+7. Views "All Booking History" (every booking across all statuses)
+8. Manages registered users (list all, delete any user)
 
 ## Validation Layer
 
-### Slot Creation Validation
+### Slot Creation / Edit Validation
 - No past slots (date must be today or later)
-- Valid time range (startTime < endTime)
+- Valid time range (`startTime` < `endTime`)
 - No overlapping time slots for same lab on same date
+- `capacity` ≤ lab `totalSeats`
+- On edit: `capacity` ≥ current approved booking count
+
+### Lab Edit / Delete Validation
+- Edit: cannot reduce `totalSeats` below any existing active slot's capacity
+- Delete: blocked if any active slots exist
 
 ### Booking Validation
 - Student cannot book past slots
 - Student cannot book same slot twice (duplicate prevention)
 - Student cannot have time overlaps on same date (prevent double-booking)
-- Cannot exceed slot capacity (approved bookings ≥ capacity)
-- Role-based access (students can only book, admins can approve/manage)
+- Cannot exceed slot capacity (`approvedCount` ≥ `capacity`)
+- Role-based access (students book only, admins approve/manage)
+
+### User Deletion Guard
+- Cannot delete the last admin account (system lockout prevention)
 
 ## Data Persistence
 
@@ -149,6 +166,14 @@ All models stored in MongoDB with Mongoose schemas:
 - Frontend: Form-level error display with specific messages
 - Backend: Consistent HTTP status codes with descriptive error messages
 - Database: Mongoose validation at schema level
+
+## API Documentation
+
+Interactive Swagger UI is available at `http://localhost:4000/api-docs` when the gateway is running.
+
+- Spec file: `docs/openapi.yaml` (OpenAPI 3.0.3)
+- All 15 endpoints documented with request/response schemas, security requirements, and error codes
+- JWT Bearer auth can be entered directly in the Swagger UI to test protected endpoints
 
 ## Deployment Pattern
 

@@ -2,6 +2,8 @@
 
 Base URL through gateway: `http://localhost:4000`
 
+> **Interactive Docs:** Swagger UI is available at `http://localhost:4000/api-docs` when the API Gateway is running.
+
 ## Authentication Endpoints
 
 ### POST /auth/register
@@ -82,6 +84,33 @@ Retrieve authenticated user profile.
 
 ---
 
+### GET /auth/users
+List all registered users. **Admin only.**
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response (200):**
+```json
+{
+  "data": [
+    { "_id": "...", "name": "Alice", "email": "alice@example.com", "role": "student" }
+  ]
+}
+```
+
+---
+
+### DELETE /auth/users/:id
+Delete a user account. Admin can delete any user; students can delete their own account.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Errors:**
+- `403 Forbidden` — Cannot delete the last admin account
+- `404 Not Found` — User not found
+
+---
+
 ## Lab Management Endpoints
 
 ### GET /booking/labs
@@ -142,6 +171,35 @@ Create a new lab. **Admin only.**
 **Errors:**
 - `401 Unauthorized` - No/invalid token
 - `403 Forbidden` - User is not an admin
+
+---
+
+### PATCH /booking/labs/:id
+Update an existing lab. **Admin only.**
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body (any subset):**
+```json
+{
+  "name": "Updated Lab Name",
+  "location": "Block B - Floor 1",
+  "totalSeats": 35
+}
+```
+
+**Errors:**
+- `409 Conflict` — Cannot reduce `totalSeats` below the capacity of an existing active slot
+
+---
+
+### DELETE /booking/labs/:id
+Delete a lab. **Admin only.**
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Errors:**
+- `409 Conflict` — Cannot delete a lab that still has active slots
 
 ---
 
@@ -211,12 +269,47 @@ Create a new slot for a lab. **Admin only.**
 ```
 
 **Errors:**
-- `400 Bad Request` - Past slot, invalid time range, or overlapping time slot
-  - Messages:
-    - `"Cannot create slot for past dates"`
-    - `"Invalid time range: startTime must be before endTime"`
-    - `"Time slot overlaps with existing slot in lab"`
+- `400 Bad Request` - Past slot, invalid time range, capacity > lab seats, or overlapping time slot
 - `403 Forbidden` - User is not an admin
+- `409 Conflict` - Time slot overlaps with existing slot in same lab
+
+---
+
+### PATCH /booking/slots/:id
+Update an existing slot. **Admin only.**
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body (any subset):**
+```json
+{
+  "date": "2026-05-10",
+  "startTime": "09:00",
+  "endTime": "11:00",
+  "capacity": 12
+}
+```
+
+**Validation Rules:**
+- Date must not be in the past
+- `endTime` must be after `startTime`
+- `capacity` must be ≥ current number of approved bookings
+- `capacity` must be ≤ lab's `totalSeats`
+- Updated time must not conflict with other slots for the same lab on same date
+
+**Errors:**
+- `400 Bad Request` — Validation failure
+- `409 Conflict` — Time conflict with other slots or capacity below approved count
+
+---
+
+### DELETE /booking/slots/:id
+Delete a slot. **Admin only.**
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Errors:**
+- `409 Conflict` — Cannot delete slot with active PENDING or APPROVED bookings
 
 ---
 
