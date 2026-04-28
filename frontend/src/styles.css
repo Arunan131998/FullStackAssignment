@@ -50,6 +50,7 @@ label {
 }
 
 input,
+select,
 button {
   padding: 8px;
 }

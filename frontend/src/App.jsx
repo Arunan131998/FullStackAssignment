@@ -15,6 +15,7 @@ function ProtectedRoute({ children, role }) {
 function App() {
   const navigate = useNavigate();
   const isLoggedIn = !!localStorage.getItem('token');
+  const userRole = localStorage.getItem('role');
 
   function handleLogout() {
     localStorage.removeItem('token');
@@ -29,8 +30,8 @@ function App() {
         <h1>Lab Slot Booking</h1>
         <nav>
           {!isLoggedIn && <Link to="/">Login</Link>}
-          {isLoggedIn && <Link to="/student">Student</Link>}
-          {isLoggedIn && <Link to="/admin">Admin</Link>}
+          {isLoggedIn && userRole === 'student' && <Link to="/student">Student</Link>}
+          {isLoggedIn && userRole === 'admin' && <Link to="/admin">Admin</Link>}
           {isLoggedIn && <button onClick={handleLogout}>Logout</button>}
         </nav>
       </header>
