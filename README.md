@@ -12,9 +12,7 @@ Monorepo scaffold for a full-stack assignment project using React frontend and N
 
 ## Quick Start
 
-1. Start MongoDB (pick one):
-   - Local MongoDB on `mongodb://127.0.0.1:27017/lab-slot-booking`, or
-   - `docker compose up -d`
+1. Start MongoDB locally and ensure it's available at `mongodb://127.0.0.1:27017/lab-slot-booking`.
 2. `.env` files are already scaffolded for local development. Update `JWT_SECRET` for production-like runs.
 3. Install dependencies:
    - `npm install`
@@ -33,12 +31,6 @@ Monorepo scaffold for a full-stack assignment project using React frontend and N
 - Auth Service: `4001`
 - Booking Service: `4002`
 - Frontend (Vite): `5173`
-
-## MongoDB via Docker
-
-`docker compose up -d`
-
-This starts MongoDB on port `27017` with a named volume.
 
 ## Demo Credentials
 
