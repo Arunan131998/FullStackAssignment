@@ -37,7 +37,9 @@ router.get('/slots', async (request, response) => {
   const filters = {};
   if (request.query.labId) filters.labId = request.query.labId;
   if (request.query.date) filters.date = request.query.date;
-  const slots = await Slot.find(filters).sort({ date: 1, startTime: 1 });
+  const slots = await Slot.find(filters)
+    .populate('labId', 'name location')
+    .sort({ date: 1, startTime: 1 });
   response.json({ data: slots });
 });
 
@@ -86,7 +88,9 @@ router.post('/bookings', requireAuth, async (request, response) => {
 });
 
 router.get('/bookings/me', requireAuth, async (request, response) => {
-  const bookings = await Booking.find({ studentId: request.user.id }).sort({ createdAt: -1 });
+  const bookings = await Booking.find({ studentId: request.user.id })
+    .populate({ path: 'slotId', populate: { path: 'labId', select: 'name location' } })
+    .sort({ createdAt: -1 });
   response.json({ data: bookings });
 });
 
