@@ -25,6 +25,8 @@ function AdminDashboard() {
   const [editSlot, setEditSlot] = useState({});
   const [deletingSlotId, setDeletingSlotId] = useState('');
   const [deletingLabId, setDeletingLabId] = useState('');
+  const [editingLabId, setEditingLabId] = useState('');
+  const [editLab, setEditLab] = useState({});
   const today = new Date().toISOString().split('T')[0];
   const selectedLab = labs.find((lab) => lab._id === selectedLabId);
 
@@ -194,6 +196,24 @@ function AdminDashboard() {
     }
   }
 
+  function startEditLab(lab) {
+    setEditingLabId(lab._id);
+    setEditLab({ name: lab.name, location: lab.location, totalSeats: lab.totalSeats });
+  }
+
+  async function handleEditLab(labId) {
+    setError('');
+    setMessage('');
+    try {
+      await apiClient.patch(`/booking/labs/${labId}`, editLab);
+      setMessage('Lab updated successfully');
+      setEditingLabId('');
+      await fetchLabs();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to update lab');
+    }
+  }
+
   async function handleDeleteLab(labId) {
     setError('');
     setMessage('');
@@ -335,23 +355,62 @@ function AdminDashboard() {
         <h3>Existing Labs</h3>
         <ul className="clean-list">
           {labs.map((lab) => (
-            <li key={lab._id} className="list-item-card">
-              <div>
-                <strong>{lab.name}</strong>
-                <div className="muted-text">{lab.location}</div>
-              </div>
-              <div className="summary-badges">
-                <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
-                <span className="status-badge neutral-badge">Slots: {availabilityByLab.find((entry) => entry._id === lab._id)?.totalSlots || 0}</span>
-                <button
-                  className="btn-danger-sm"
-                  disabled={deletingLabId === lab._id}
-                  onClick={() => handleDeleteLab(lab._id)}
-                  type="button"
-                >
-                  {deletingLabId === lab._id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+            <li key={lab._id} className={`list-item-card ${editingLabId === lab._id ? 'slot-editing-row' : ''}`}>
+              {editingLabId === lab._id ? (
+                <div className="slot-edit-form">
+                  <div className="slot-edit-fields">
+                    <label>
+                      Name
+                      <input
+                        type="text"
+                        value={editLab.name}
+                        onChange={(e) => setEditLab((prev) => ({ ...prev, name: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Location
+                      <input
+                        type="text"
+                        value={editLab.location}
+                        onChange={(e) => setEditLab((prev) => ({ ...prev, location: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Total Seats
+                      <input
+                        type="number"
+                        min="1"
+                        value={editLab.totalSeats}
+                        onChange={(e) => setEditLab((prev) => ({ ...prev, totalSeats: Number(e.target.value) }))}
+                      />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button type="button" onClick={() => handleEditLab(lab._id)}>Save</button>
+                    <button type="button" className="btn-secondary" onClick={() => setEditingLabId('')}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <strong>{lab.name}</strong>
+                    <div className="muted-text">{lab.location}</div>
+                  </div>
+                  <div className="summary-badges">
+                    <span className="status-badge neutral-badge">Seats: {lab.totalSeats}</span>
+                    <span className="status-badge neutral-badge">Slots: {availabilityByLab.find((entry) => entry._id === lab._id)?.totalSlots || 0}</span>
+                    <button type="button" onClick={() => startEditLab(lab)}>Edit</button>
+                    <button
+                      className="btn-danger-sm"
+                      disabled={deletingLabId === lab._id}
+                      onClick={() => handleDeleteLab(lab._id)}
+                      type="button"
+                    >
+                      {deletingLabId === lab._id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
           {!labs.length && <li className="empty-state">No labs created yet.</li>}

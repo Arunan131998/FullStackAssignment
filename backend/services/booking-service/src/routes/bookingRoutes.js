@@ -45,6 +45,37 @@ router.post('/labs', requireAuth, requireAdmin, async (request, response) => {
   }
 });
 
+router.patch('/labs/:id', requireAuth, requireAdmin, async (request, response) => {
+  const { name, location, totalSeats } = request.body;
+  if (!name && !location && !totalSeats) {
+    return response.status(400).json({ message: 'Provide at least one field to update: name, location, or totalSeats' });
+  }
+  try {
+    const lab = await Lab.findById(request.params.id);
+    if (!lab) {
+      return response.status(404).json({ message: 'Lab not found' });
+    }
+    const newSeats = totalSeats ? Number(totalSeats) : lab.totalSeats;
+    if (newSeats < lab.totalSeats) {
+      const maxSlotCapacity = await Slot.findOne({ labId: request.params.id, isActive: true })
+        .sort({ capacity: -1 });
+      if (maxSlotCapacity && newSeats < maxSlotCapacity.capacity) {
+        return response.status(409).json({
+          message: `Cannot reduce seats below an existing slot capacity (${maxSlotCapacity.capacity}). Update or delete that slot first.`,
+        });
+      }
+    }
+    if (name) lab.name = name;
+    if (location) lab.location = location;
+    if (totalSeats) lab.totalSeats = newSeats;
+    await lab.save();
+    return response.json({ data: lab });
+  } catch (error) {
+    console.error('[PATCH /labs/:id] error:', error.message);
+    return response.status(500).json({ message: error.message });
+  }
+});
+
 router.delete('/labs/:id', requireAuth, requireAdmin, async (request, response) => {
   try {
     const lab = await Lab.findById(request.params.id);
