@@ -5,6 +5,7 @@ function AdminDashboard() {
   const [labs, setLabs] = useState([]);
   const [slots, setSlots] = useState([]);
   const [pendingBookings, setPendingBookings] = useState([]);
+  const [approvedBookings, setApprovedBookings] = useState([]);
   const [name, setName] = useState('Computer Networks Lab');
   const [location, setLocation] = useState('Block A, Floor 2');
   const [totalSeats, setTotalSeats] = useState(30);
@@ -37,11 +38,16 @@ function AdminDashboard() {
     setPendingBookings(response.data?.data || []);
   }
 
+  async function fetchApprovedBookings() {
+    const response = await apiClient.get('/booking/bookings', { params: { status: 'APPROVED' } });
+    setApprovedBookings(response.data?.data || []);
+  }
+
   useEffect(() => {
     async function loadDashboardData() {
       setError('');
       try {
-        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings()]);
+        await Promise.all([fetchLabs(), fetchSlots(), fetchPendingBookings(), fetchApprovedBookings()]);
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Failed to load admin dashboard');
       }
@@ -94,9 +100,24 @@ function AdminDashboard() {
     try {
       await apiClient.patch(`/booking/bookings/${bookingId}/${decision}`);
       setMessage(`Booking ${decision}d successfully`);
-      await fetchPendingBookings();
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings()]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || `Failed to ${decision} booking`);
+    } finally {
+      setActiveBookingId('');
+    }
+  }
+
+  async function handleCancelBooking(bookingId) {
+    setError('');
+    setMessage('');
+    setActiveBookingId(bookingId);
+    try {
+      await apiClient.patch(`/booking/bookings/${bookingId}/cancel`);
+      setMessage('Booking cancelled successfully');
+      await Promise.all([fetchPendingBookings(), fetchApprovedBookings()]);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to cancel booking');
     } finally {
       setActiveBookingId('');
     }
@@ -250,6 +271,33 @@ function AdminDashboard() {
             </li>
           ))}
           {!pendingBookings.length && <li className="empty-state">No pending booking requests.</li>}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Approved Bookings</h3>
+        <ul className="clean-list">
+          {approvedBookings.map((booking) => (
+            <li key={booking._id} className="list-item-card">
+              <div>
+                <strong>{renderPendingBookingSlot(booking)}</strong>
+                <div className="muted-text">Student ID: {booking.studentId}</div>
+                {booking.purpose && <div className="muted-text">Purpose: {booking.purpose}</div>}
+              </div>
+              <div className="inline-actions">
+                <span className="status-badge status-approved">APPROVED</span>
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={activeBookingId === booking._id}
+                  onClick={() => handleCancelBooking(booking._id)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </li>
+          ))}
+          {!approvedBookings.length && <li className="empty-state">No approved bookings yet.</li>}
         </ul>
       </div>
     </section>

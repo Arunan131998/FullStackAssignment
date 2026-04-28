@@ -49,7 +49,14 @@ function App() {
 
       <main className="page-shell">
         <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={
+              isLoggedIn
+                ? <Navigate to={userRole === 'admin' ? '/admin' : '/student'} replace />
+                : <LoginPage />
+            }
+          />
           <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
         </Routes>
