@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
@@ -16,6 +16,7 @@ function ProtectedRoute({ children, role }) {
 
 function App() {
   const navigate = useNavigate();
+  const [authReady, setAuthReady] = useState(false);
   const isLoggedIn = !!sessionStorage.getItem('token');
   const userRole = sessionStorage.getItem('role');
 
@@ -24,6 +25,7 @@ function App() {
     setAuthToken(token);
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    setAuthReady(true);
   }, []);
 
   function handleLogout() {
@@ -31,6 +33,10 @@ function App() {
     sessionStorage.removeItem('role');
     setAuthToken(null);
     navigate('/');
+  }
+
+  if (!authReady) {
+    return null;
   }
 
   return (
